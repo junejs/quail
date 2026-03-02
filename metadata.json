@@ -1,0 +1,5 @@
+{
+  "name": "quail",
+  "description": "A real-time, interactive quiz platform inspired by Kahoot!",
+  "requestFramePermissions": []
+}
