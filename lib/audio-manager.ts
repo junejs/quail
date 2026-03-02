@@ -1,12 +1,12 @@
 import { Howl } from 'howler';
 
 export const AUDIO_ASSETS = {
-  lobby: 'https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3',
-  question: 'https://assets.mixkit.co/music/preview/mixkit-game-show-suspense-waiting-667.mp3',
-  correct: 'https://assets.mixkit.co/sfx/preview/mixkit-winning-chime-2064.mp3',
-  incorrect: 'https://assets.mixkit.co/sfx/preview/mixkit-negative-answer-741.mp3',
-  podium: 'https://assets.mixkit.co/music/preview/mixkit-starlight-607.mp3',
-  join: 'https://assets.mixkit.co/sfx/preview/mixkit-light-button-2580.mp3',
+  lobby: '/audio/lobby.mp3',
+  question: '/audio/question.mp3',
+  correct: '/audio/correct.mp3',
+  incorrect: '/audio/incorrect.mp3',
+  podium: '/audio/podium.mp3',
+  join: '/audio/join.mp3',
 };
 
 class AudioManager {
