@@ -314,6 +314,20 @@ export default function HostPage() {
                 );
               })}
             </div>
+
+            {selectedQuiz.questions[currentQuestionIndex].explanation && (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="mt-12 w-full max-w-4xl bg-indigo-50 border-2 border-indigo-100 p-8 rounded-3xl"
+              >
+                <h3 className="text-indigo-600 font-black uppercase tracking-widest text-sm mb-2">Explanation</h3>
+                <p className="text-xl font-bold text-zinc-800 leading-relaxed">
+                  {selectedQuiz.questions[currentQuestionIndex].explanation}
+                </p>
+              </motion.div>
+            )}
           </motion.div>
         )}
 

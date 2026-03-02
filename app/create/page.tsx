@@ -24,6 +24,7 @@ export default function CreateQuizPage() {
         { id: 3, text: '', color: 'bg-green-500', shape: 'square' },
       ],
       correctAnswerIndexes: [0],
+      explanation: '',
     },
   ]);
 
@@ -42,6 +43,7 @@ export default function CreateQuizPage() {
           { id: 3, text: '', color: 'bg-green-500', shape: 'square' },
         ],
         correctAnswerIndexes: [0],
+        explanation: '',
       },
     ]);
   };
@@ -232,6 +234,16 @@ export default function CreateQuizPage() {
                     </button>
                   </div>
                 ))}
+              </div>
+
+              <div className="mt-8">
+                <label className="block text-sm font-bold text-zinc-500 uppercase tracking-wider mb-2">Answer Explanation (Optional)</label>
+                <textarea 
+                  placeholder="Explain why the answer is correct..."
+                  value={q.explanation || ''}
+                  onChange={(e) => handleQuestionChange(qIndex, 'explanation', e.target.value)}
+                  className="w-full p-4 bg-zinc-50 border-2 border-zinc-100 rounded-xl focus:border-indigo-500 focus:bg-white outline-none transition-all font-medium text-zinc-700 min-h-[100px] resize-none"
+                />
               </div>
             </motion.div>
           ))}

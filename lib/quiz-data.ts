@@ -16,6 +16,7 @@ export const sampleQuiz: Quiz = {
         { id: 3, text: "Madrid", color: "bg-green-500", shape: "square" },
       ],
       correctAnswerIndexes: [2],
+      explanation: "Paris has been the capital of France since the 10th century.",
     },
     {
       id: 2,
@@ -27,6 +28,7 @@ export const sampleQuiz: Quiz = {
         { id: 1, text: "False", color: "bg-red-500", shape: "triangle" },
       ],
       correctAnswerIndexes: [1],
+      explanation: "The Earth is an oblate spheroid, which is a sphere that is slightly flattened at the poles.",
     },
     {
       id: 3,
@@ -40,6 +42,7 @@ export const sampleQuiz: Quiz = {
         { id: 3, text: "Yellow", color: "bg-green-500", shape: "square" },
       ],
       correctAnswerIndexes: [0, 2, 3],
+      explanation: "In the subtractive color system (like paint), Red, Blue, and Yellow are the primary colors.",
     },
   ]
 };

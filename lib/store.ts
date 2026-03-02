@@ -7,6 +7,7 @@ export interface Question {
   timeLimit: number;
   options: { id: number; text: string; color: string; shape: string }[];
   correctAnswerIndexes: number[]; // Changed from correctAnswerIndex to support multiple
+  explanation?: string;
 }
 
 export interface Quiz {
