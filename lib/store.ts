@@ -20,6 +20,7 @@ interface GameState {
   pin: string | null;
   nickname: string | null;
   avatar: string | null;
+  sessionId: string | null;
   isHost: boolean;
   gameState: 'idle' | 'lobby' | 'question' | 'question_result' | 'leaderboard' | 'podium';
   players: any[];
@@ -32,6 +33,7 @@ interface GameState {
   setPin: (pin: string | null) => void;
   setNickname: (nickname: string | null) => void;
   setAvatar: (avatar: string | null) => void;
+  setSessionId: (id: string | null) => void;
   setIsHost: (isHost: boolean) => void;
   setGameState: (state: 'idle' | 'lobby' | 'question' | 'question_result' | 'leaderboard' | 'podium') => void;
   setPlayers: (players: any[]) => void;
@@ -42,12 +44,15 @@ interface GameState {
   fetchQuizzes: () => Promise<void>;
   fetchResults: () => Promise<void>;
   setSelectedQuiz: (quiz: Quiz | null) => void;
+  resetGame: () => void;
+  hydrate: () => void;
 }
 
-export const useGameStore = create<GameState>((set) => ({
+export const useGameStore = create<GameState>((set, get) => ({
   pin: null,
   nickname: null,
   avatar: null,
+  sessionId: null,
   isHost: false,
   gameState: 'idle',
   players: [],
@@ -57,10 +62,26 @@ export const useGameStore = create<GameState>((set) => ({
   quizzes: [],
   gameResults: [],
   selectedQuiz: null,
-  setPin: (pin) => set({ pin }),
-  setNickname: (nickname) => set({ nickname }),
-  setAvatar: (avatar) => set({ avatar }),
-  setIsHost: (isHost) => set({ isHost }),
+  setPin: (pin) => {
+    set({ pin });
+    if (typeof window !== 'undefined') localStorage.setItem('quail_pin', pin || '');
+  },
+  setNickname: (nickname) => {
+    set({ nickname });
+    if (typeof window !== 'undefined') localStorage.setItem('quail_nickname', nickname || '');
+  },
+  setAvatar: (avatar) => {
+    set({ avatar });
+    if (typeof window !== 'undefined') localStorage.setItem('quail_avatar', avatar || '');
+  },
+  setSessionId: (sessionId) => {
+    set({ sessionId });
+    if (typeof window !== 'undefined') localStorage.setItem('quail_sessionId', sessionId || '');
+  },
+  setIsHost: (isHost) => {
+    set({ isHost });
+    if (typeof window !== 'undefined') localStorage.setItem('quail_isHost', isHost ? 'true' : 'false');
+  },
   setGameState: (gameState) => set({ gameState }),
   setPlayers: (players) => set({ players }),
   setCurrentQuestion: (currentQuestion) => set({ currentQuestion }),
@@ -97,4 +118,37 @@ export const useGameStore = create<GameState>((set) => ({
     }
   },
   setSelectedQuiz: (selectedQuiz) => set({ selectedQuiz }),
+  resetGame: () => {
+    set({
+      pin: null,
+      nickname: null,
+      avatar: null,
+      sessionId: null,
+      isHost: false,
+      gameState: 'idle',
+      players: [],
+      currentQuestion: null,
+      score: 0,
+      streak: 0,
+    });
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('quail_pin');
+      localStorage.removeItem('quail_nickname');
+      localStorage.removeItem('quail_avatar');
+      localStorage.removeItem('quail_sessionId');
+      localStorage.removeItem('quail_isHost');
+    }
+  },
+  hydrate: () => {
+    if (typeof window === 'undefined') return;
+    const pin = localStorage.getItem('quail_pin');
+    const nickname = localStorage.getItem('quail_nickname');
+    const avatar = localStorage.getItem('quail_avatar');
+    const sessionId = localStorage.getItem('quail_sessionId');
+    const isHost = localStorage.getItem('quail_isHost') === 'true';
+
+    if (pin || nickname || sessionId) {
+      set({ pin, nickname, avatar, sessionId, isHost });
+    }
+  }
 }));

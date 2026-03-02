@@ -10,7 +10,7 @@ import { audioManager } from '@/lib/audio-manager';
 export default function PlayPage() {
   const router = useRouter();
   const { socket } = useSocket();
-  const { pin, nickname, avatar, isHost, gameState, setGameState, score, setScore, streak, setStreak, selectedQuiz } = useGameStore();
+  const { pin, nickname, avatar, isHost, gameState, setGameState, score, setScore, streak, setStreak, selectedQuiz, resetGame } = useGameStore();
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(-1);
   const [hasAnswered, setHasAnswered] = useState(false);
@@ -94,23 +94,10 @@ export default function PlayPage() {
     if (hasAnswered || !socket || !selectedQuiz || indexes.length === 0) return;
     
     setHasAnswered(true);
-    const question = selectedQuiz!.questions[currentQuestionIndex];
-    
-    // Check correctness
-    let isCorrect = false;
-    if (question.type === 'multiple') {
-      const correctSet = new Set(question.correctAnswerIndexes);
-      const selectedSet = new Set(indexes);
-      isCorrect = correctSet.size === selectedSet.size && [...correctSet].every(i => selectedSet.has(i));
-    } else {
-      isCorrect = question.correctAnswerIndexes.includes(indexes[0]);
-    }
     
     socket.emit('submit_answer', {
       pin,
-      answerIndexes: indexes,
-      isCorrect,
-      timeLimit: question.timeLimit
+      answerIndexes: indexes
     });
   };
 
@@ -282,7 +269,10 @@ export default function PlayPage() {
             </div>
 
             <button 
-              onClick={() => router.push('/')}
+              onClick={() => {
+                resetGame();
+                router.push('/');
+              }}
               className="mt-12 bg-white/20 hover:bg-white/30 px-8 py-4 rounded-xl font-bold text-xl transition-colors"
             >
               Play Again

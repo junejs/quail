@@ -12,7 +12,7 @@ import { Volume2, VolumeX } from 'lucide-react';
 export default function HostPage() {
   const router = useRouter();
   const { socket } = useSocket();
-  const { pin, isHost, gameState, setGameState, players, setPlayers, selectedQuiz } = useGameStore();
+  const { pin, isHost, gameState, setGameState, players, setPlayers, selectedQuiz, resetGame } = useGameStore();
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(-1);
   const [timeLeft, setTimeLeft] = useState(0);
@@ -190,10 +190,13 @@ export default function HostPage() {
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     key={p.id} 
-                    className="bg-white px-6 py-3 rounded-xl shadow-sm text-xl font-bold text-zinc-800 flex items-center gap-3"
+                    className={`bg-white px-6 py-3 rounded-xl shadow-sm text-xl font-bold flex items-center gap-3 border-2 transition-colors ${
+                      p.isDisconnected ? 'border-red-200 text-zinc-400 grayscale' : 'border-transparent text-zinc-800'
+                    }`}
                   >
                     <span className="text-2xl">{p.avatar}</span>
                     {p.nickname}
+                    {p.isDisconnected && <span className="text-xs font-black text-red-400 uppercase tracking-widest ml-2">Offline</span>}
                   </motion.div>
                 ))}
               </div>
@@ -437,7 +440,10 @@ export default function HostPage() {
             </div>
             
             <button 
-              onClick={() => router.push('/')}
+              onClick={() => {
+                resetGame();
+                router.push('/');
+              }}
               className="mt-24 text-zinc-500 font-bold hover:text-zinc-800 underline"
             >
               Back to Home

@@ -14,7 +14,8 @@ export default function Home() {
   const { socket, isConnected } = useSocket();
   const { 
     setPin, setNickname, setAvatar, setIsHost, setGameState, 
-    quizzes, addQuiz, fetchQuizzes, selectedQuiz, setSelectedQuiz 
+    quizzes, addQuiz, fetchQuizzes, selectedQuiz, setSelectedQuiz,
+    sessionId, setSessionId, setPlayers
   } = useGameStore();
   
   const [inputPin, setInputPin] = useState('');
@@ -23,6 +24,13 @@ export default function Home() {
   const [isJoining, setIsJoining] = useState(false);
   const [showHostOptions, setShowHostOptions] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+
+  useEffect(() => {
+    if (!sessionId && typeof window !== 'undefined') {
+      const id = localStorage.getItem('quail_sessionId') || Math.random().toString(36).substring(2, 15);
+      setSessionId(id);
+    }
+  }, [sessionId, setSessionId]);
 
   useEffect(() => {
     const init = async () => {
@@ -51,19 +59,36 @@ export default function Home() {
       router.push('/play');
     };
 
+    const onRejoinedRoom = ({ pin, isHost, player, quiz, gameState, players }: any) => {
+      setPin(pin);
+      setIsHost(isHost);
+      setGameState(gameState);
+      setSelectedQuiz(quiz);
+      if (isHost) {
+        setPlayers(players || []);
+        router.push('/host');
+      } else {
+        setNickname(player.nickname);
+        setAvatar(player.avatar);
+        router.push('/play');
+      }
+    };
+
     const onError = (msg: string) => {
       setError(msg);
       setIsJoining(false);
     };
 
     socket.on('joined_room', onJoinedRoom);
+    socket.on('rejoined_room', onRejoinedRoom);
     socket.on('error', onError);
 
     return () => {
       socket.off('joined_room', onJoinedRoom);
+      socket.off('rejoined_room', onRejoinedRoom);
       socket.off('error', onError);
     };
-  }, [socket, router, setPin, setNickname, setAvatar, setIsHost, setGameState, setSelectedQuiz]);
+  }, [socket, router, setPin, setNickname, setAvatar, setIsHost, setGameState, setSelectedQuiz, setPlayers]);
 
   const handleHostGame = () => {
     if (!socket) return;
@@ -73,7 +98,7 @@ export default function Home() {
 
     setSelectedQuiz(quizToUse);
     setIsHost(true);
-    socket.emit('create_room', quizToUse);
+    socket.emit('create_room', { quiz: quizToUse, sessionId });
     socket.once('room_created', (pin: string) => {
       setPin(pin);
       setGameState('lobby');
@@ -93,7 +118,7 @@ export default function Home() {
     setIsJoining(true);
     setError('');
     
-    socket.emit('join_room', { pin: inputPin, nickname: inputNickname });
+    socket.emit('join_room', { pin: inputPin, nickname: inputNickname, sessionId });
   };
 
   const toggleMute = () => {

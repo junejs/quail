@@ -20,6 +20,7 @@ app.prepare().then(() => {
 // Types
 interface Player {
   id: string;
+  sessionId: string;
   nickname: string;
   avatar: string;
   score: number;
@@ -30,6 +31,7 @@ interface Player {
   lastPointsEarned?: number;
   lastSpeedBonus?: number;
   lastStreakBonus?: number;
+  isDisconnected: boolean;
 }
 
 const AVATARS = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🦆', '🦅', '🦉', '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🐛', '🦋', '🐌', '🐞', '🐜', '🦟', '🦗', '🕷', '🦂', '🐢', '🐍', '🦎', '🦖', '🦕', '🐙', '🦑', '🦐', '🦞', '🦀', '🐡', '🐠', '🐟', '🐬', '🐳', '🐋', '🦈', '🐊', '🐅', '🐆', '🦓', '🦍', '🦧', '🐘', '🦛', '🦏', '🐪', '🐫', '🦒', '🦘', '🐃', '🐂', '🐄', '🐎', '🐖', '🐏', '🐑', '🐐', '🦌', '🐕', '🐩', '🐈', '🐓', '🦃', '🦚', '🦜', '🦢', '🦩', '🕊', '🐇', '🦝', '🦨', '🦡', '🦦', '🦥', '🐁', '🐀', '🐿', '🦔'];
@@ -41,6 +43,7 @@ function getRandomAvatar() {
 interface Room {
   pin: string;
   hostId: string;
+  hostSessionId: string;
   players: Record<string, Player>;
   state: 'lobby' | 'question' | 'question_result' | 'leaderboard' | 'podium';
   currentQuestionIndex: number;
@@ -123,11 +126,12 @@ io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
 
   // Host creates a room
-  socket.on('create_room', (quiz) => {
+  socket.on('create_room', ({ quiz, sessionId }) => {
     const pin = generatePin();
     rooms[pin] = {
       pin,
       hostId: socket.id,
+      hostSessionId: sessionId,
       players: {},
       state: 'lobby',
       currentQuestionIndex: -1,
@@ -140,7 +144,7 @@ io.on('connection', (socket) => {
   });
 
   // Player joins a room
-  socket.on('join_room', ({ pin, nickname }) => {
+  socket.on('join_room', ({ pin, nickname, sessionId }) => {
     const room = rooms[pin];
     if (!room) {
       socket.emit('error', 'Room not found');
@@ -151,8 +155,20 @@ io.on('connection', (socket) => {
       return;
     }
 
+    // Check if player with this sessionId already exists
+    const existingPlayer = Object.values(room.players).find(p => p.sessionId === sessionId);
+    if (existingPlayer) {
+      existingPlayer.id = socket.id;
+      existingPlayer.isDisconnected = false;
+      socket.join(pin);
+      socket.emit('joined_room', { pin, player: existingPlayer, quiz: room.quiz });
+      io.to(room.hostId).emit('player_joined', Object.values(room.players));
+      return;
+    }
+
     const player: Player = {
       id: socket.id,
+      sessionId,
       nickname,
       avatar: getRandomAvatar(),
       score: 0,
@@ -160,12 +176,63 @@ io.on('connection', (socket) => {
       hasAnswered: false,
       lastAnswerCorrect: false,
       totalResponseTime: 0,
+      isDisconnected: false,
     };
 
     room.players[socket.id] = player;
     socket.join(pin);
     socket.emit('joined_room', { pin, player, quiz: room.quiz });
     
+    // Notify host
+    io.to(room.hostId).emit('player_joined', Object.values(room.players));
+  });
+
+  // Player rejoins a room (after refresh)
+  socket.on('rejoin_room', ({ pin, sessionId }) => {
+    const room = rooms[pin];
+    if (!room) {
+      socket.emit('rejoin_failed', 'Room not found');
+      return;
+    }
+
+    // Check if it's the host rejoining
+    if (room.hostSessionId === sessionId) {
+      room.hostId = socket.id;
+      socket.join(pin);
+      socket.emit('rejoined_room', { 
+        pin, 
+        isHost: true,
+        quiz: room.quiz,
+        gameState: room.state,
+        currentQuestionIndex: room.currentQuestionIndex,
+        players: Object.values(room.players)
+      });
+      return;
+    }
+
+    const player = Object.values(room.players).find(p => p.sessionId === sessionId);
+    if (!player) {
+      socket.emit('rejoin_failed', 'Session not found');
+      return;
+    }
+
+    // Update player socket ID
+    const oldId = player.id;
+    delete room.players[oldId];
+    player.id = socket.id;
+    player.isDisconnected = false;
+    room.players[socket.id] = player;
+
+    socket.join(pin);
+    socket.emit('rejoined_room', { 
+      pin, 
+      isHost: false,
+      player, 
+      quiz: room.quiz,
+      gameState: room.state,
+      currentQuestionIndex: room.currentQuestionIndex
+    });
+
     // Notify host
     io.to(room.hostId).emit('player_joined', Object.values(room.players));
   });
@@ -236,18 +303,27 @@ io.on('connection', (socket) => {
   });
 
   // Player submits answer
-  socket.on('submit_answer', ({ pin, answerIndexes, isCorrect, timeLimit }) => {
+  socket.on('submit_answer', ({ pin, answerIndexes }) => {
     const room = rooms[pin];
     if (!room || room.state !== 'question') return;
 
-    const player = room.players[socket.id] as any;
+    const player = room.players[socket.id];
     if (!player || player.hasAnswered) return;
 
+    const currentQuestion = room.quiz.questions[room.currentQuestionIndex];
+    if (!currentQuestion) return;
+
     const timeTaken = Date.now() - room.questionStartTime;
+    const timeLimit = currentQuestion.timeLimit || 20;
+    
     player.hasAnswered = true;
     player.totalResponseTime += timeTaken;
     
-    room.answers[socket.id] = Array.isArray(answerIndexes) ? answerIndexes[0] : answerIndexes;
+    const submittedIndex = Array.isArray(answerIndexes) ? answerIndexes[0] : answerIndexes;
+    room.answers[socket.id] = submittedIndex;
+
+    // Server-side correctness check
+    const isCorrect = currentQuestion.options[submittedIndex]?.isCorrect;
 
     if (isCorrect) {
       player.lastAnswerCorrect = true;
@@ -333,14 +409,21 @@ io.on('connection', (socket) => {
     // Handle player disconnect
     for (const pin in rooms) {
       const room = rooms[pin];
-      if (room.players[socket.id]) {
-        delete room.players[socket.id];
-        io.to(room.hostId).emit('player_left', Object.values(room.players));
+      const player = room.players[socket.id];
+      if (player) {
+        player.isDisconnected = true;
+        // Don't delete immediately to allow rejoining
+        io.to(room.hostId).emit('player_joined', Object.values(room.players));
       }
-      // If host disconnects, end the room
+      // If host disconnects, end the room after a short delay
       if (room.hostId === socket.id) {
-        io.to(pin).emit('host_disconnected');
-        delete rooms[pin];
+        setTimeout(() => {
+          // Check if host reconnected (id might have changed)
+          if (rooms[pin] && rooms[pin].hostId === socket.id) {
+            io.to(pin).emit('host_disconnected');
+            delete rooms[pin];
+          }
+        }, 5000);
       }
     }
   });
