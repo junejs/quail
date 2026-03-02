@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSocket } from '@/components/socket-provider';
 import { useGameStore } from '@/lib/store';
+import { audioManager } from '@/lib/audio-manager';
 
 export default function PlayPage() {
   const router = useRouter();
@@ -43,6 +44,12 @@ export default function PlayPage() {
       setAnswerResult(result);
       setScore(result.score);
       setStreak(result.streak);
+      
+      if (result.isCorrect) {
+        audioManager?.playSfx('correct');
+      } else {
+        audioManager?.playSfx('incorrect');
+      }
     };
 
     const onLeaderboardUpdated = () => {

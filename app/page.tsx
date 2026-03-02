@@ -6,7 +6,8 @@ import { motion } from 'motion/react';
 import { useSocket } from '@/components/socket-provider';
 import { useGameStore } from '@/lib/store';
 import { sampleQuiz } from '@/lib/quiz-data';
-import { PlusCircle, Play, Settings } from 'lucide-react';
+import { PlusCircle, Play, Settings, Volume2, VolumeX } from 'lucide-react';
+import { audioManager } from '@/lib/audio-manager';
 
 export default function Home() {
   const router = useRouter();
@@ -21,6 +22,7 @@ export default function Home() {
   const [error, setError] = useState('');
   const [isJoining, setIsJoining] = useState(false);
   const [showHostOptions, setShowHostOptions] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
 
   useEffect(() => {
     // Initialize with sample quiz if no quizzes exist
@@ -58,6 +60,7 @@ export default function Home() {
 
   const handleHostGame = () => {
     if (!socket) return;
+    audioManager?.playSfx('join'); // Unlock audio
     const quizToUse = selectedQuiz || quizzes[0];
     if (!quizToUse) return;
 
@@ -74,6 +77,7 @@ export default function Home() {
   const handleJoinGame = (e: React.FormEvent) => {
     e.preventDefault();
     if (!socket) return;
+    audioManager?.playSfx('join'); // Unlock audio
     if (!inputPin || !inputNickname) {
       setError('Please enter both PIN and Nickname');
       return;
@@ -85,8 +89,21 @@ export default function Home() {
     socket.emit('join_room', { pin: inputPin, nickname: inputNickname });
   };
 
+  const toggleMute = () => {
+    const muted = audioManager?.toggleMute();
+    setIsMuted(!!muted);
+  };
+
   return (
     <div className="min-h-screen bg-zinc-100 flex flex-col items-center justify-center p-4 font-sans">
+      <div className="absolute top-4 right-4">
+        <button 
+          onClick={toggleMute}
+          className="p-3 rounded-full bg-white shadow-md text-zinc-600 hover:bg-zinc-50 transition-colors"
+        >
+          {isMuted ? <VolumeX size={24} /> : <Volume2 size={24} />}
+        </button>
+      </div>
       <motion.div 
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}

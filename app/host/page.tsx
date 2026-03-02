@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useSocket } from '@/components/socket-provider';
 import { useGameStore } from '@/lib/store';
 import confetti from 'canvas-confetti';
+import { audioManager } from '@/lib/audio-manager';
+import { Volume2, VolumeX } from 'lucide-react';
 
 export default function HostPage() {
   const router = useRouter();
@@ -18,6 +20,7 @@ export default function HostPage() {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [podium, setPodium] = useState<any[]>([]);
   const [answerCounts, setAnswerCounts] = useState<Record<number, number>>({});
+  const [isMuted, setIsMuted] = useState(false);
 
   useEffect(() => {
     if (!isHost || !pin || !socket || !selectedQuiz) {
@@ -27,6 +30,7 @@ export default function HostPage() {
 
     const onPlayerJoined = (newPlayers: any[]) => {
       setPlayers(newPlayers);
+      audioManager?.playSfx('join');
     };
 
     const onPlayerLeft = (newPlayers: any[]) => {
@@ -81,6 +85,11 @@ export default function HostPage() {
     socket.on('leaderboard_updated', onLeaderboardUpdated);
     socket.on('game_ended', onGameEnded);
 
+    // Initial BGM
+    if (gameState === 'lobby') {
+      audioManager?.playBgm('lobby');
+    }
+
     return () => {
       socket.off('player_joined', onPlayerJoined);
       socket.off('player_left', onPlayerLeft);
@@ -91,7 +100,19 @@ export default function HostPage() {
       socket.off('leaderboard_updated', onLeaderboardUpdated);
       socket.off('game_ended', onGameEnded);
     };
-  }, [socket, isHost, pin, router, setPlayers, setGameState, selectedQuiz]);
+  }, [socket, isHost, pin, router, setPlayers, setGameState, selectedQuiz, gameState]);
+
+  useEffect(() => {
+    if (gameState === 'lobby') {
+      audioManager?.playBgm('lobby');
+    } else if (gameState === 'question') {
+      audioManager?.playBgm('question');
+    } else if (gameState === 'podium') {
+      audioManager?.playBgm('podium');
+    } else {
+      audioManager?.stopBgm();
+    }
+  }, [gameState]);
 
   useEffect(() => {
     if (gameState === 'question' && timeLeft > 0) {
@@ -103,6 +124,7 @@ export default function HostPage() {
   }, [gameState, timeLeft, socket, pin]);
 
   const handleStartGame = () => {
+    audioManager?.playSfx('join'); // Trigger to unlock audio context
     socket?.emit('start_game', pin);
   };
 
@@ -116,6 +138,11 @@ export default function HostPage() {
     } else {
       socket?.emit('end_game', pin);
     }
+  };
+
+  const toggleMute = () => {
+    const muted = audioManager?.toggleMute();
+    setIsMuted(!!muted);
   };
 
   if (!isHost || !selectedQuiz) return null;
@@ -132,10 +159,18 @@ export default function HostPage() {
             className="flex-1 flex flex-col"
           >
             <div className="bg-white p-8 shadow-sm flex justify-between items-center">
-              <div>
-                <h2 className="text-2xl font-bold text-zinc-500">Join at the App with Game PIN:</h2>
-                <h1 className="text-7xl font-black tracking-tighter text-indigo-600 mt-2">{pin}</h1>
-                <p className="mt-4 text-xl font-bold text-zinc-400">Quiz: {selectedQuiz.title}</p>
+              <div className="flex items-center gap-8">
+                <div>
+                  <h2 className="text-2xl font-bold text-zinc-500">Join at the App with Game PIN:</h2>
+                  <h1 className="text-7xl font-black tracking-tighter text-indigo-600 mt-2">{pin}</h1>
+                  <p className="mt-4 text-xl font-bold text-zinc-400">Quiz: {selectedQuiz.title}</p>
+                </div>
+                <button 
+                  onClick={toggleMute}
+                  className="p-4 rounded-full bg-zinc-100 text-zinc-600 hover:bg-zinc-200 transition-colors"
+                >
+                  {isMuted ? <VolumeX size={32} /> : <Volume2 size={32} />}
+                </button>
               </div>
               <button 
                 onClick={handleStartGame}
