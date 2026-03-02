@@ -27,6 +27,7 @@ interface GameState {
   score: number;
   streak: number;
   quizzes: Quiz[];
+  gameResults: any[];
   selectedQuiz: Quiz | null;
   setPin: (pin: string | null) => void;
   setNickname: (nickname: string | null) => void;
@@ -39,6 +40,7 @@ interface GameState {
   setStreak: (streak: number) => void;
   addQuiz: (quiz: Quiz) => Promise<void>;
   fetchQuizzes: () => Promise<void>;
+  fetchResults: () => Promise<void>;
   setSelectedQuiz: (quiz: Quiz | null) => void;
 }
 
@@ -53,6 +55,7 @@ export const useGameStore = create<GameState>((set) => ({
   score: 0,
   streak: 0,
   quizzes: [],
+  gameResults: [],
   selectedQuiz: null,
   setPin: (pin) => set({ pin }),
   setNickname: (nickname) => set({ nickname }),
@@ -82,6 +85,15 @@ export const useGameStore = create<GameState>((set) => ({
       set({ quizzes });
     } catch (err) {
       console.error('Failed to fetch quizzes:', err);
+    }
+  },
+  fetchResults: async () => {
+    try {
+      const res = await fetch('/api/results');
+      const gameResults = await res.json();
+      set({ gameResults });
+    } catch (err) {
+      console.error('Failed to fetch results:', err);
     }
   },
   setSelectedQuiz: (selectedQuiz) => set({ selectedQuiz }),

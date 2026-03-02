@@ -6,7 +6,7 @@ import { motion } from 'motion/react';
 import { useSocket } from '@/components/socket-provider';
 import { useGameStore } from '@/lib/store';
 import { sampleQuiz } from '@/lib/quiz-data';
-import { PlusCircle, Play, Settings, Volume2, VolumeX } from 'lucide-react';
+import { PlusCircle, Play, Settings, Volume2, VolumeX, History } from 'lucide-react';
 import { audioManager } from '@/lib/audio-manager';
 
 export default function Home() {
@@ -204,14 +204,22 @@ export default function Home() {
                 <span className="font-bold text-sm">Create Quiz</span>
               </button>
               <button
-                onClick={handleHostGame}
-                disabled={!selectedQuiz}
-                className="flex flex-col items-center gap-2 p-4 bg-indigo-600 rounded-2xl text-white hover:bg-indigo-700 transition-all shadow-lg disabled:opacity-50"
+                onClick={() => router.push('/history')}
+                className="flex flex-col items-center gap-2 p-4 bg-zinc-50 border-2 border-zinc-100 rounded-2xl text-zinc-600 hover:border-amber-200 hover:bg-amber-50 hover:text-amber-600 transition-all"
               >
-                <Play size={24} />
-                <span className="font-bold text-sm">Start Lobby</span>
+                <History size={24} />
+                <span className="font-bold text-sm">History</span>
               </button>
             </div>
+
+            <button
+              onClick={handleHostGame}
+              disabled={!selectedQuiz}
+              className="w-full flex items-center justify-center gap-2 p-4 bg-indigo-600 rounded-2xl text-white hover:bg-indigo-700 transition-all shadow-lg disabled:opacity-50"
+            >
+              <Play size={24} />
+              <span className="font-bold text-lg">Start Lobby</span>
+            </button>
 
             <button
               onClick={() => setShowHostOptions(false)}
