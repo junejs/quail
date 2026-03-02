@@ -104,66 +104,90 @@ export default function PlayPage() {
   if (isHost || !selectedQuiz) return null;
 
   return (
-    <div className="min-h-screen bg-zinc-100 flex flex-col font-sans">
+    <div className="min-h-screen flex flex-col font-sans relative overflow-hidden">
       <AnimatePresence mode="wait">
         {gameState === 'lobby' && (
           <motion.div 
             key="lobby"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.1 }}
             className="flex-1 flex flex-col items-center justify-center p-8 text-center"
           >
-            <h1 className="text-4xl font-black text-zinc-800 mb-4">You&apos;re in!</h1>
-            <p className="text-2xl font-bold text-zinc-500">See your nickname on screen</p>
-            <div className="mt-12 flex flex-col items-center gap-4">
-              <div className="text-8xl animate-bounce">{avatar}</div>
-              <div className="text-3xl font-black text-indigo-600 bg-white px-8 py-4 rounded-2xl shadow-sm">
-                {nickname}
+            <motion.div 
+              animate={{ y: [0, -10, 0] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              className="bg-white/10 backdrop-blur-xl p-12 rounded-[3rem] border border-white/20 shadow-2xl"
+            >
+              <h1 className="text-5xl font-black text-white mb-4 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">You&apos;re in!</h1>
+              <p className="text-xl font-bold text-white/50 uppercase tracking-widest">See your nickname on screen</p>
+              <div className="mt-12 flex flex-col items-center gap-6">
+                <motion.div 
+                  animate={{ scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="text-9xl"
+                >
+                  {avatar}
+                </motion.div>
+                <div className="text-4xl font-black text-indigo-400 bg-white/5 border border-white/10 px-10 py-5 rounded-3xl shadow-xl">
+                  {nickname}
+                </div>
               </div>
-            </div>
+            </motion.div>
           </motion.div>
         )}
 
         {gameState === 'question' && !hasAnswered && currentQuestionIndex >= 0 && selectedQuiz && (
           <motion.div 
             key="question"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex-1 flex flex-col p-2"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="flex-1 flex flex-col p-4 gap-4"
           >
-            <div className={`flex-1 grid gap-2 ${selectedQuiz.questions[currentQuestionIndex].type === 'true_false' ? 'grid-cols-1 grid-rows-2' : 'grid-cols-2 grid-rows-2'}`}>
+            <div className={`flex-1 grid gap-4 ${selectedQuiz.questions[currentQuestionIndex].type === 'true_false' ? 'grid-cols-1 grid-rows-2' : 'grid-cols-2 grid-rows-2'}`}>
               {selectedQuiz.questions[currentQuestionIndex].options.map((opt: any, i: number) => (
-                <button
+                <motion.button
                   key={opt.id}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => toggleSelection(i)}
-                  className={`${opt.color} rounded-xl shadow-sm flex items-center justify-center active:scale-95 transition-all relative overflow-hidden ${selectedIndexes.includes(i) ? 'ring-8 ring-white/50 scale-95' : ''}`}
+                  className={`${opt.color} rounded-3xl shadow-xl flex items-center justify-center transition-all relative overflow-hidden group border-4 ${selectedIndexes.includes(i) ? 'border-white scale-95 shadow-[0_0_30px_rgba(255,255,255,0.5)]' : 'border-transparent'}`}
                 >
                   <div className="flex flex-col items-center gap-4">
-                    {opt.shape === 'triangle' && <div className="w-0 h-0 border-l-[40px] border-r-[40px] border-b-[68px] border-l-transparent border-r-transparent border-b-white" />}
-                    {opt.shape === 'diamond' && <div className="w-20 h-20 bg-white rotate-45" />}
-                    {opt.shape === 'circle' && <div className="w-24 h-24 bg-white rounded-full" />}
-                    {opt.shape === 'square' && <div className="w-24 h-24 bg-white" />}
+                    <div className="transform group-hover:scale-110 transition-transform">
+                      {opt.shape === 'triangle' && <div className="w-0 h-0 border-l-[40px] border-r-[40px] border-b-[68px] border-l-transparent border-r-transparent border-b-white drop-shadow-lg" />}
+                      {opt.shape === 'diamond' && <div className="w-20 h-20 bg-white rotate-45 shadow-lg" />}
+                      {opt.shape === 'circle' && <div className="w-24 h-24 bg-white rounded-full shadow-lg" />}
+                      {opt.shape === 'square' && <div className="w-24 h-24 bg-white shadow-lg" />}
+                    </div>
                     {selectedQuiz.questions[currentQuestionIndex].type === 'multiple' && selectedIndexes.includes(i) && (
-                      <div className="absolute top-4 right-4 bg-white text-indigo-600 rounded-full p-1">
+                      <motion.div 
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="absolute top-6 right-6 bg-white text-indigo-600 rounded-full p-2 shadow-xl"
+                      >
                         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={5} d="M5 13l4 4L19 7" />
                         </svg>
-                      </div>
+                      </motion.div>
                     )}
                   </div>
-                </button>
+                  {/* Decorative inner glow */}
+                  <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </motion.button>
               ))}
             </div>
             {selectedQuiz.questions[currentQuestionIndex].type === 'multiple' && (
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => handleAnswer(selectedIndexes)}
                 disabled={selectedIndexes.length === 0}
-                className="mt-4 bg-zinc-900 text-white font-black text-2xl py-6 rounded-2xl shadow-lg active:scale-95 transition-transform disabled:opacity-50"
+                className="bg-white text-indigo-600 font-black text-3xl py-8 rounded-[2rem] shadow-[0_0_30px_rgba(255,255,255,0.2)] disabled:opacity-50 uppercase tracking-widest"
               >
-                Submit
-              </button>
+                Submit Answer
+              </motion.button>
             )}
           </motion.div>
         )}
@@ -174,30 +198,60 @@ export default function PlayPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="flex-1 flex flex-col items-center justify-center bg-indigo-600 text-white p-8 text-center"
+            className="flex-1 flex flex-col items-center justify-center p-8 text-center"
           >
-            <div className="w-16 h-16 border-4 border-white/30 border-t-white rounded-full animate-spin mb-8" />
-            <h1 className="text-4xl font-black">Waiting for others...</h1>
+            <div className="relative">
+              <div className="w-24 h-24 border-8 border-white/10 border-t-indigo-500 rounded-full animate-spin mb-10" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-12 h-12 bg-indigo-500/20 blur-xl rounded-full animate-pulse" />
+              </div>
+            </div>
+            <h1 className="text-4xl font-black text-white mb-2">Waiting for others...</h1>
+            <p className="text-white/40 font-bold uppercase tracking-widest text-xs">The tension is building!</p>
           </motion.div>
         )}
 
         {gameState === 'question' && hasAnswered && answerResult && (
           <motion.div 
             key="result"
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            className={`flex-1 flex flex-col items-center justify-center p-8 text-center text-white ${answerResult.isCorrect ? 'bg-green-500' : 'bg-red-500'}`}
+            exit={{ opacity: 0, scale: 1.1 }}
+            className={`flex-1 flex flex-col items-center justify-center p-8 text-center text-white relative ${answerResult.isCorrect ? 'bg-emerald-600' : 'bg-rose-600'}`}
           >
-            <h1 className="text-6xl font-black mb-4">
-              {answerResult.isCorrect ? 'Correct!' : 'Incorrect'}
-            </h1>
+            {/* Feedback Loops */}
+            {answerResult.isCorrect && (
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute inset-0 bg-white/20 animate-pulse" />
+              </div>
+            )}
+            {!answerResult.isCorrect && (
+              <motion.div 
+                animate={{ x: [-10, 10, -10, 10, 0] }}
+                transition={{ duration: 0.4 }}
+                className="absolute inset-0 pointer-events-none bg-black/20"
+              />
+            )}
+
+            <motion.h1 
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              className="text-7xl font-black mb-6 drop-shadow-2xl"
+            >
+              {answerResult.isCorrect ? 'CORRECT!' : 'INCORRECT'}
+            </motion.h1>
             
-            <div className="text-6xl mb-6">{avatar}</div>
+            <motion.div 
+              animate={{ rotate: answerResult.isCorrect ? [0, 10, -10, 0] : [0, -5, 5, 0] }}
+              transition={{ duration: 0.5 }}
+              className="text-9xl mb-10 drop-shadow-2xl"
+            >
+              {avatar}
+            </motion.div>
             
-            <div className="bg-black/20 px-8 py-4 rounded-2xl mb-4 w-full max-w-xs">
-              <p className="text-xl font-bold opacity-80 mb-1">Total Score</p>
-              <p className="text-5xl font-black">{answerResult.score}</p>
+            <div className="bg-black/30 backdrop-blur-md border border-white/10 px-10 py-6 rounded-[2.5rem] mb-6 w-full max-w-xs shadow-2xl">
+              <p className="text-xs font-black uppercase tracking-[0.3em] opacity-50 mb-2">Total Score</p>
+              <p className="text-6xl font-black">{answerResult.score}</p>
             </div>
 
             {answerResult.isCorrect && answerResult.lastPointsEarned !== undefined && (
@@ -205,22 +259,26 @@ export default function PlayPage() {
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.3 }}
-                className="flex flex-col gap-2"
+                className="flex flex-col gap-4"
               >
-                <div className="text-2xl font-black bg-white/20 px-6 py-2 rounded-xl">
-                  +{answerResult.lastPointsEarned} points!
+                <div className="text-3xl font-black bg-white/20 backdrop-blur-sm px-8 py-3 rounded-2xl border border-white/20">
+                  +{answerResult.lastPointsEarned}
                 </div>
                 {answerResult.streak >= 2 && (
-                  <div className="bg-orange-500 text-white px-6 py-2 rounded-full font-bold text-lg shadow-lg flex items-center justify-center gap-2 animate-bounce">
-                    <span>🔥</span> {answerResult.streak} Answer Streak!
-                  </div>
+                  <motion.div 
+                    animate={{ scale: [1, 1.1, 1] }}
+                    transition={{ duration: 1, repeat: Infinity }}
+                    className="bg-orange-500 text-white px-8 py-3 rounded-full font-black text-xl shadow-[0_0_20px_rgba(249,115,22,0.5)] flex items-center justify-center gap-3"
+                  >
+                    <span>🔥</span> {answerResult.streak} STREAK!
+                  </motion.div>
                 )}
               </motion.div>
             )}
 
             {!answerResult.isCorrect && (
-              <p className="text-2xl font-bold mt-8 opacity-90">
-                Don&apos;t give up!
+              <p className="text-2xl font-black mt-8 opacity-60 uppercase tracking-widest">
+                Keep going!
               </p>
             )}
           </motion.div>
@@ -229,54 +287,73 @@ export default function PlayPage() {
         {gameState === 'leaderboard' && (
           <motion.div 
             key="leaderboard-wait"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex-1 flex flex-col items-center justify-center bg-indigo-600 text-white p-8 text-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="flex-1 flex flex-col items-center justify-center p-8 text-center"
           >
-            <h1 className="text-4xl font-black mb-8">You&apos;re in {score > 0 ? 'the game' : 'the lobby'}!</h1>
-            <div className="text-6xl mb-6">{avatar}</div>
-            <div className="bg-black/20 px-8 py-4 rounded-2xl">
-              <p className="text-xl font-bold opacity-80 mb-1">Current Score</p>
-              <p className="text-4xl font-black">{score}</p>
+            <div className="bg-white/10 backdrop-blur-xl p-12 rounded-[3rem] border border-white/20 shadow-2xl w-full max-w-sm">
+              <h1 className="text-4xl font-black text-white mb-8">
+                {score > 0 ? 'You&apos;re climbing!' : 'Ready for next?'}
+              </h1>
+              <div className="text-8xl mb-10 drop-shadow-2xl animate-bounce">{avatar}</div>
+              <div className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl mb-8">
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-2">Current Score</p>
+                <p className="text-5xl font-black text-white">{score}</p>
+              </div>
+              <p className="text-xs font-black uppercase tracking-[0.4em] text-indigo-400 animate-pulse">Look at the big screen</p>
             </div>
-            <p className="text-xl font-bold mt-12 opacity-80">Look at the big screen</p>
           </motion.div>
         )}
 
         {gameState === 'podium' && (
           <motion.div 
             key="podium-result"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex-1 flex flex-col items-center justify-center bg-indigo-600 text-white p-8 text-center"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex-1 flex flex-col items-center justify-center p-8 text-center"
           >
-            <h1 className="text-5xl font-black mb-4">Game Over!</h1>
-            
-            <div className="text-7xl mb-4">{avatar}</div>
+            <div className="bg-white/10 backdrop-blur-xl p-12 rounded-[3.5rem] border border-white/20 shadow-2xl w-full max-w-md relative overflow-hidden">
+              {/* Decorative inner glow */}
+              <div className="absolute -top-24 -left-24 w-48 h-48 bg-indigo-500/30 blur-3xl rounded-full pointer-events-none" />
+              
+              <h1 className="text-5xl font-black text-white mb-4 uppercase tracking-tighter">Game Over!</h1>
+              
+              <motion.div 
+                animate={{ rotate: [0, 5, -5, 0] }}
+                transition={{ duration: 4, repeat: Infinity }}
+                className="text-9xl mb-8 drop-shadow-2xl"
+              >
+                {avatar}
+              </motion.div>
 
-            <div className="bg-white text-indigo-600 px-12 py-8 rounded-3xl shadow-xl my-8">
-              <p className="text-2xl font-bold opacity-80 mb-2">You placed</p>
-              <p className="text-8xl font-black">
-                {finalRank}
-                <span className="text-4xl">{finalRank === 1 ? 'st' : finalRank === 2 ? 'nd' : finalRank === 3 ? 'rd' : 'th'}</span>
-              </p>
+              <div className="bg-white text-indigo-900 px-12 py-10 rounded-[2.5rem] shadow-2xl my-8 transform hover:scale-105 transition-transform">
+                <p className="text-sm font-black uppercase tracking-[0.3em] opacity-40 mb-2">Final Rank</p>
+                <p className="text-9xl font-black leading-none">
+                  {finalRank}
+                  <span className="text-4xl align-top ml-1">
+                    {finalRank === 1 ? 'st' : finalRank === 2 ? 'nd' : finalRank === 3 ? 'rd' : 'th'}
+                  </span>
+                </p>
+              </div>
+
+              <div className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl mb-10">
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-1">Final Score</p>
+                <p className="text-5xl font-black text-white">{score}</p>
+              </div>
+
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  resetGame();
+                  router.push('/');
+                }}
+                className="w-full bg-indigo-600 text-white px-10 py-6 rounded-2xl font-black text-2xl shadow-[0_0_20px_rgba(79,70,229,0.4)] hover:bg-indigo-500 transition-all uppercase tracking-widest"
+              >
+                Play Again
+              </motion.button>
             </div>
-
-            <div className="bg-black/20 px-8 py-4 rounded-2xl">
-              <p className="text-xl font-bold opacity-80 mb-1">Final Score</p>
-              <p className="text-4xl font-black">{score}</p>
-            </div>
-
-            <button 
-              onClick={() => {
-                resetGame();
-                router.push('/');
-              }}
-              className="mt-12 bg-white/20 hover:bg-white/30 px-8 py-4 rounded-xl font-bold text-xl transition-colors"
-            >
-              Play Again
-            </button>
           </motion.div>
         )}
       </AnimatePresence>

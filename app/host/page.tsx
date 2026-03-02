@@ -9,6 +9,7 @@ import confetti from 'canvas-confetti';
 import { audioManager } from '@/lib/audio-manager';
 import { Volume2, VolumeX, QrCode } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 export default function HostPage() {
   const router = useRouter();
@@ -152,7 +153,7 @@ export default function HostPage() {
   if (!isHost || !selectedQuiz) return null;
 
   return (
-    <div className="min-h-screen bg-zinc-100 flex flex-col font-sans overflow-hidden">
+    <div className="min-h-screen flex flex-col font-sans overflow-hidden relative">
       <AnimatePresence mode="wait">
         {gameState === 'lobby' && (
           <motion.div 
@@ -162,74 +163,77 @@ export default function HostPage() {
             exit={{ opacity: 0 }}
             className="flex-1 flex flex-col"
           >
-            <div className="bg-white p-8 shadow-sm flex justify-between items-center">
-              <div className="flex items-center gap-8">
+            <div className="bg-white/10 backdrop-blur-xl p-8 border-b border-white/10 flex justify-between items-center shadow-2xl">
+              <div className="flex items-center gap-12">
                 <div>
-                  <h2 className="text-2xl font-bold text-zinc-500">Join at the App with Game PIN:</h2>
-                  <div className="flex items-center gap-6 mt-2">
-                    <h1 className="text-7xl font-black tracking-tighter text-indigo-600">{pin}</h1>
+                  <h2 className="text-sm font-black text-white/40 uppercase tracking-[0.3em] mb-2">Join at the App with Game PIN:</h2>
+                  <div className="flex items-center gap-8">
+                    <motion.h1 
+                      animate={{ scale: [1, 1.05, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="text-9xl font-black tracking-tighter text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]"
+                    >
+                      {pin}
+                    </motion.h1>
                     <button 
                       onClick={() => setShowQR(!showQR)}
-                      className={`p-4 rounded-2xl transition-all flex items-center gap-2 font-bold ${
-                        showQR ? 'bg-indigo-600 text-white shadow-lg scale-105' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                      className={`p-5 rounded-3xl transition-all flex items-center gap-3 font-black uppercase tracking-widest text-sm border ${
+                        showQR ? 'bg-white text-indigo-900 border-white shadow-[0_0_30px_rgba(255,255,255,0.4)]' : 'bg-white/5 text-white border-white/10 hover:bg-white/10'
                       }`}
                       title="Show QR Code"
                     >
-                      <QrCode size={32} />
-                      <span className="text-xl">Scan to Join</span>
+                      <QrCode size={24} />
+                      <span>Scan to Join</span>
                     </button>
                   </div>
-                  <p className="mt-4 text-xl font-bold text-zinc-400">Quiz: {selectedQuiz.title}</p>
+                  <div className="mt-6 flex items-center gap-3">
+                    <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(99,102,241,1)]" />
+                    <p className="text-lg font-bold text-white/60">Quiz: <span className="text-white">{selectedQuiz.title}</span></p>
+                  </div>
                 </div>
                 <button 
                   onClick={toggleMute}
-                  className="p-4 rounded-full bg-zinc-100 text-zinc-600 hover:bg-zinc-200 transition-colors"
+                  className="p-5 rounded-full bg-white/5 text-white border border-white/10 hover:bg-white/10 transition-all"
                 >
                   {isMuted ? <VolumeX size={32} /> : <Volume2 size={32} />}
                 </button>
               </div>
-              <button 
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={handleStartGame}
                 disabled={players.length === 0}
-                className="bg-indigo-600 text-white px-12 py-6 rounded-2xl text-3xl font-bold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                className="bg-white text-indigo-900 px-16 py-8 rounded-[2.5rem] text-4xl font-black hover:bg-indigo-50 disabled:opacity-30 transition-all shadow-[0_0_40px_rgba(255,255,255,0.2)] uppercase tracking-tighter"
               >
-                Start
-              </button>
+                Start Game
+              </motion.button>
             </div>
-            <div className="flex-1 p-8 relative">
+            <div className="flex-1 p-12 relative">
               <AnimatePresence>
                 {showQR && (
                   <motion.div
                     initial={{ opacity: 0, scale: 0.9, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                    className="absolute inset-0 z-50 flex items-center justify-center bg-zinc-100/80 backdrop-blur-sm p-8"
+                    className="absolute inset-0 z-50 flex items-center justify-center bg-[#0a0502]/60 backdrop-blur-xl p-8"
                   >
-                    <div className="bg-white p-12 rounded-[3rem] shadow-2xl flex flex-col items-center text-center border-8 border-indigo-600">
-                      <h2 className="text-4xl font-black text-zinc-800 mb-8">Scan to Join Game</h2>
-                      <div className="bg-white p-6 rounded-3xl shadow-inner border-4 border-zinc-100">
+                    <div className="bg-white p-16 rounded-[4rem] shadow-[0_0_60px_rgba(255,255,255,0.2)] flex flex-col items-center text-center border-[12px] border-indigo-600">
+                      <h2 className="text-5xl font-black text-zinc-900 mb-10 uppercase tracking-tighter">Scan to Join Game</h2>
+                      <div className="bg-white p-8 rounded-[3rem] shadow-inner border-4 border-zinc-100">
                         <QRCodeCanvas 
                           value={joinUrl} 
-                          size={320}
+                          size={400}
                           level="H"
                           includeMargin={true}
-                          imageSettings={{
-                            src: "/favicon.ico", // Optional: add logo if exists
-                            x: undefined,
-                            y: undefined,
-                            height: 60,
-                            width: 60,
-                            excavate: true,
-                          }}
                         />
                       </div>
-                      <div className="mt-8">
-                        <p className="text-2xl font-bold text-zinc-500 mb-2">Game PIN</p>
-                        <p className="text-6xl font-black text-indigo-600 tracking-widest">{pin}</p>
+                      <div className="mt-10">
+                        <p className="text-xl font-black text-zinc-400 uppercase tracking-widest mb-2">Game PIN</p>
+                        <p className="text-8xl font-black text-indigo-600 tracking-widest">{pin}</p>
                       </div>
                       <button 
                         onClick={() => setShowQR(false)}
-                        className="mt-12 bg-zinc-900 text-white px-12 py-4 rounded-2xl text-2xl font-bold hover:bg-zinc-800 transition-colors"
+                        className="mt-12 bg-zinc-900 text-white px-16 py-5 rounded-3xl text-2xl font-black hover:bg-zinc-800 transition-all uppercase tracking-widest"
                       >
                         Close
                       </button>
@@ -238,24 +242,28 @@ export default function HostPage() {
                 )}
               </AnimatePresence>
 
-              <div className="flex justify-between items-center mb-8">
-                <h3 className="text-3xl font-bold text-zinc-800">Players ({players.length})</h3>
+              <div className="flex justify-between items-center mb-10">
+                <h3 className="text-3xl font-black text-white/80 uppercase tracking-widest">Players ({players.length})</h3>
               </div>
-              <div className="flex flex-wrap gap-4">
-                {players.map((p) => (
-                  <motion.div 
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    key={p.id} 
-                    className={`bg-white px-6 py-3 rounded-xl shadow-sm text-xl font-bold flex items-center gap-3 border-2 transition-colors ${
-                      p.isDisconnected ? 'border-red-200 text-zinc-400 grayscale' : 'border-transparent text-zinc-800'
-                    }`}
-                  >
-                    <span className="text-2xl">{p.avatar}</span>
-                    {p.nickname}
-                    {p.isDisconnected && <span className="text-xs font-black text-red-400 uppercase tracking-widest ml-2">Offline</span>}
-                  </motion.div>
-                ))}
+              <div className="flex flex-wrap gap-6">
+                <AnimatePresence>
+                  {players.map((p) => (
+                    <motion.div 
+                      layout
+                      initial={{ scale: 0, opacity: 0, y: 20 }}
+                      animate={{ scale: 1, opacity: 1, y: 0 }}
+                      exit={{ scale: 0, opacity: 0 }}
+                      key={p.id} 
+                      className={`bg-white/10 backdrop-blur-md px-8 py-4 rounded-2xl shadow-xl text-2xl font-black flex items-center gap-4 border transition-all ${
+                        p.isDisconnected ? 'border-rose-500/50 text-white/30 grayscale' : 'border-white/10 text-white'
+                      }`}
+                    >
+                      <span className="text-4xl">{p.avatar}</span>
+                      {p.nickname}
+                      {p.isDisconnected && <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest ml-2">Offline</span>}
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
               </div>
             </div>
           </motion.div>
@@ -267,50 +275,55 @@ export default function HostPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="flex-1 flex flex-col p-8"
+            className="flex-1 flex flex-col p-12"
           >
-            <div className="bg-white rounded-3xl p-12 shadow-sm text-center mb-8 relative overflow-hidden">
-              <h1 className="text-5xl font-bold text-zinc-800 relative z-10">
+            <div className="bg-white/10 backdrop-blur-xl rounded-[3rem] p-16 border border-white/20 shadow-2xl text-center mb-12 relative overflow-hidden">
+              {/* Decorative inner glow */}
+              <div className="absolute -top-24 -left-24 w-64 h-64 bg-indigo-500/20 blur-3xl rounded-full pointer-events-none" />
+              
+              <h1 className="text-6xl font-black text-white relative z-10 leading-tight">
                 {selectedQuiz.questions[currentQuestionIndex].text}
               </h1>
               {selectedQuiz.questions[currentQuestionIndex].type === 'multiple' && (
-                <div className="mt-4 text-indigo-600 font-bold uppercase tracking-widest text-sm">
+                <div className="mt-6 text-indigo-400 font-black uppercase tracking-[0.4em] text-sm">
                   Multiple Choice - Select all that apply
                 </div>
               )}
             </div>
             
-            <div className="flex justify-between items-center mb-8 px-4">
+            <div className="flex justify-between items-center mb-12 px-8">
               <motion.div 
                 animate={{ 
-                  scale: timeLeft <= 5 ? [1, 1.2, 1] : 1,
-                  color: timeLeft <= 5 ? ['#4f46e5', '#ef4444', '#4f46e5'] : '#4f46e5'
+                  scale: timeLeft <= 5 ? [1, 1.15, 1] : 1,
+                  borderColor: timeLeft <= 5 ? ['rgba(255,255,255,0.2)', '#ef4444', 'rgba(255,255,255,0.2)'] : 'rgba(255,255,255,0.2)'
                 }}
                 transition={{ duration: 0.5, repeat: timeLeft <= 5 ? Infinity : 0 }}
-                className="w-32 h-32 rounded-full bg-white border-8 border-indigo-600 flex items-center justify-center text-5xl font-black shadow-xl"
+                className="w-40 h-40 rounded-full bg-white/5 backdrop-blur-md border-8 border-white/10 flex items-center justify-center text-7xl font-black text-white shadow-2xl"
               >
                 {timeLeft}
               </motion.div>
-              <div className="text-3xl font-bold text-zinc-500 bg-white px-8 py-4 rounded-2xl shadow-sm">
-                Answers: <span className="text-indigo-600">{answersCount}</span> / {players.length}
+              <div className="text-4xl font-black text-white/40 bg-white/5 backdrop-blur-md px-12 py-6 rounded-[2rem] border border-white/10 shadow-xl">
+                Answers: <span className="text-white">{answersCount}</span> <span className="text-white/20">/</span> {players.length}
               </div>
             </div>
 
-            <div className={`grid gap-6 flex-1 ${selectedQuiz.questions[currentQuestionIndex].type === 'true_false' ? 'grid-cols-2' : 'grid-cols-2'}`}>
+            <div className={`grid gap-8 flex-1 ${selectedQuiz.questions[currentQuestionIndex].type === 'true_false' ? 'grid-cols-2' : 'grid-cols-2'}`}>
               {selectedQuiz.questions[currentQuestionIndex].options.map((opt: any) => (
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   key={opt.id} 
-                  className={`${opt.color} rounded-2xl shadow-sm flex items-center p-8 text-white relative overflow-hidden group`}
+                  className={`${opt.color} rounded-[2.5rem] shadow-2xl flex items-center p-10 text-white relative overflow-hidden group border-4 border-transparent`}
                 >
-                  <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mr-6 group-hover:scale-110 transition-transform">
-                    {opt.shape === 'triangle' && <div className="w-0 h-0 border-l-[20px] border-r-[20px] border-b-[34px] border-l-transparent border-r-transparent border-b-white" />}
-                    {opt.shape === 'diamond' && <div className="w-10 h-10 bg-white rotate-45" />}
-                    {opt.shape === 'circle' && <div className="w-12 h-12 bg-white rounded-full" />}
-                    {opt.shape === 'square' && <div className="w-12 h-12 bg-white" />}
+                  <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mr-8 group-hover:scale-110 transition-transform shadow-lg">
+                    {opt.shape === 'triangle' && <div className="w-0 h-0 border-l-[24px] border-r-[24px] border-b-[42px] border-l-transparent border-r-transparent border-b-white drop-shadow-md" />}
+                    {opt.shape === 'diamond' && <div className="w-12 h-12 bg-white rotate-45 shadow-md" />}
+                    {opt.shape === 'circle' && <div className="w-14 h-14 bg-white rounded-full shadow-md" />}
+                    {opt.shape === 'square' && <div className="w-14 h-14 bg-white shadow-md" />}
                   </div>
-                  <span className="text-4xl font-bold">{opt.text}</span>
+                  <span className="text-5xl font-black tracking-tight">{opt.text}</span>
+                  {/* Decorative inner glow */}
+                  <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </motion.div>
               ))}
             </div>
@@ -323,25 +336,27 @@ export default function HostPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="flex-1 flex flex-col p-8 items-center"
+            className="flex-1 flex flex-col p-12 items-center"
           >
-            <div className="w-full max-w-4xl flex justify-between items-center mb-12">
-              <h1 className="text-5xl font-black text-zinc-800">Results</h1>
-              <button 
+            <div className="w-full max-w-6xl flex justify-between items-center mb-16">
+              <h1 className="text-6xl font-black text-white uppercase tracking-tighter">Results</h1>
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={handleShowLeaderboard}
-                className="bg-indigo-600 text-white px-8 py-4 rounded-xl text-2xl font-bold hover:bg-indigo-700 transition-colors shadow-lg"
+                className="bg-white text-indigo-900 px-12 py-6 rounded-2xl text-3xl font-black hover:bg-indigo-50 transition-all shadow-[0_0_30px_rgba(255,255,255,0.3)] uppercase tracking-widest"
               >
                 Next
-              </button>
+              </motion.button>
             </div>
 
-            <div className="bg-white rounded-3xl p-12 shadow-sm text-center mb-12 w-full max-w-4xl">
-              <h1 className="text-4xl font-bold text-zinc-800">
+            <div className="bg-white/10 backdrop-blur-xl rounded-[3rem] p-12 border border-white/20 shadow-2xl text-center mb-16 w-full max-w-6xl">
+              <h1 className="text-4xl font-black text-white leading-tight">
                 {selectedQuiz.questions[currentQuestionIndex].text}
               </h1>
             </div>
 
-            <div className="flex items-end justify-center gap-8 h-64 w-full max-w-4xl">
+            <div className="flex items-end justify-center gap-10 h-80 w-full max-w-6xl px-12">
               {selectedQuiz.questions[currentQuestionIndex].options.map((opt: any, i: number) => {
                 const count = answerCounts[i] || 0;
                 const total = Math.max(1, Object.values(answerCounts).reduce((a, b) => a + b, 0));
@@ -349,26 +364,30 @@ export default function HostPage() {
                 const isCorrect = selectedQuiz.questions[currentQuestionIndex].correctAnswerIndexes.includes(i);
 
                 return (
-                  <div key={opt.id} className="flex flex-col items-center gap-4 flex-1">
-                    <span className="text-3xl font-black text-zinc-800">{count}</span>
+                  <div key={opt.id} className="flex flex-col items-center gap-6 flex-1">
+                    <span className="text-4xl font-black text-white">{count}</span>
                     <motion.div 
                       initial={{ height: 0 }}
-                      animate={{ height: `${Math.max(5, heightPercentage)}%` }}
-                      className={`w-full rounded-t-xl relative ${isCorrect ? 'bg-green-500' : opt.color} ${!isCorrect && 'opacity-50'}`}
+                      animate={{ height: `${Math.max(8, heightPercentage)}%` }}
+                      className={`w-full rounded-t-3xl relative shadow-2xl ${isCorrect ? 'bg-emerald-500' : opt.color} ${!isCorrect && 'opacity-30'}`}
                     >
                       {isCorrect && (
-                        <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-green-500">
-                          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" />
+                        <motion.div 
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="absolute -top-10 left-1/2 -translate-x-1/2 text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.5)]"
+                        >
+                          <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={5} d="M5 13l4 4L19 7" />
                           </svg>
-                        </div>
+                        </motion.div>
                       )}
                     </motion.div>
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${opt.color}`}>
-                      {opt.shape === 'triangle' && <div className="w-0 h-0 border-l-[12px] border-r-[12px] border-b-[20px] border-l-transparent border-r-transparent border-b-white" />}
-                      {opt.shape === 'diamond' && <div className="w-6 h-6 bg-white rotate-45" />}
-                      {opt.shape === 'circle' && <div className="w-8 h-8 bg-white rounded-full" />}
-                      {opt.shape === 'square' && <div className="w-8 h-8 bg-white" />}
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${opt.color}`}>
+                      {opt.shape === 'triangle' && <div className="w-0 h-0 border-l-[16px] border-r-[16px] border-b-[28px] border-l-transparent border-r-transparent border-b-white" />}
+                      {opt.shape === 'diamond' && <div className="w-8 h-8 bg-white rotate-45" />}
+                      {opt.shape === 'circle' && <div className="w-10 h-10 bg-white rounded-full" />}
+                      {opt.shape === 'square' && <div className="w-10 h-10 bg-white" />}
                     </div>
                   </div>
                 );
@@ -380,10 +399,10 @@ export default function HostPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
-                className="mt-12 w-full max-w-4xl bg-indigo-50 border-2 border-indigo-100 p-8 rounded-3xl"
+                className="mt-16 w-full max-w-6xl bg-white/5 backdrop-blur-md border border-white/10 p-10 rounded-[2.5rem] shadow-2xl"
               >
-                <h3 className="text-indigo-600 font-black uppercase tracking-widest text-sm mb-2">Explanation</h3>
-                <p className="text-xl font-bold text-zinc-800 leading-relaxed">
+                <h3 className="text-indigo-400 font-black uppercase tracking-[0.4em] text-xs mb-3">Explanation</h3>
+                <p className="text-2xl font-bold text-white leading-relaxed">
                   {selectedQuiz.questions[currentQuestionIndex].explanation}
                 </p>
               </motion.div>
@@ -397,42 +416,66 @@ export default function HostPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="flex-1 flex flex-col p-8 items-center"
+            className="flex-1 flex flex-col p-12 items-center"
           >
-            <div className="w-full max-w-4xl flex justify-between items-center mb-12">
-              <h1 className="text-5xl font-black text-zinc-800">Leaderboard</h1>
-              <button 
+            <div className="w-full max-w-5xl flex justify-between items-center mb-16">
+              <h1 className="text-6xl font-black text-white uppercase tracking-tighter">Leaderboard</h1>
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={handleNextQuestion}
-                className="bg-indigo-600 text-white px-8 py-4 rounded-xl text-2xl font-bold hover:bg-indigo-700 transition-colors"
+                className="bg-white text-indigo-900 px-12 py-6 rounded-2xl text-3xl font-black hover:bg-indigo-50 transition-all shadow-[0_0_30px_rgba(255,255,255,0.3)] uppercase tracking-widest"
               >
-                {currentQuestionIndex < selectedQuiz.questions.length - 1 ? 'Next' : 'End Game'}
-              </button>
+                {currentQuestionIndex < selectedQuiz.questions.length - 1 ? 'Next Question' : 'View Podium'}
+              </motion.button>
             </div>
             
-            <div className="w-full max-w-4xl space-y-4">
-              {leaderboard.map((p, index) => (
-                <motion.div 
-                  initial={{ x: -50, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: index * 0.1 }}
-                  key={p.id} 
-                  className="bg-white p-6 rounded-2xl shadow-sm flex justify-between items-center"
-                >
-                  <div className="flex items-center gap-6">
-                    <span className="text-3xl font-black text-zinc-400 w-8">{index + 1}</span>
-                    <div className="flex items-center gap-3">
-                      <span className="text-4xl">{p.avatar}</span>
-                      <span className="text-3xl font-bold text-zinc-800">{p.nickname}</span>
+            <div className="w-full max-w-5xl space-y-4">
+              <AnimatePresence mode="popLayout">
+                {leaderboard.map((p, index) => (
+                  <motion.div 
+                    layout
+                    initial={{ x: -50, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    exit={{ x: 50, opacity: 0 }}
+                    transition={{ 
+                      type: "spring",
+                      stiffness: 300,
+                      damping: 30,
+                      delay: index * 0.05 
+                    }}
+                    key={p.id} 
+                    className="bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/10 shadow-xl flex justify-between items-center group hover:bg-white/15 transition-colors"
+                  >
+                    <div className="flex items-center gap-8">
+                      <span className="text-4xl font-black text-white/20 w-12">{index + 1}</span>
+                      <div className="flex items-center gap-5">
+                        <motion.span 
+                          animate={{ scale: index === 0 ? [1, 1.2, 1] : 1 }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                          className="text-5xl"
+                        >
+                          {p.avatar}
+                        </motion.span>
+                        <span className="text-4xl font-black text-white tracking-tight">{p.nickname}</span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    {p.streak >= 3 && (
-                      <span className="text-2xl" title={`${p.streak} answer streak!`}>🔥 {p.streak}</span>
-                    )}
-                    <span className="text-3xl font-black text-indigo-600">{p.score}</span>
-                  </div>
-                </motion.div>
-              ))}
+                    <div className="flex items-center gap-6">
+                      {p.streak >= 3 && (
+                        <motion.span 
+                          animate={{ scale: [1, 1.1, 1] }}
+                          transition={{ duration: 1, repeat: Infinity }}
+                          className="text-3xl bg-orange-500/20 px-4 py-2 rounded-2xl border border-orange-500/30 text-orange-400 font-black" 
+                          title={`${p.streak} answer streak!`}
+                        >
+                          🔥 {p.streak}
+                        </motion.span>
+                      )}
+                      <span className="text-5xl font-black text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">{p.score}</span>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
           </motion.div>
         )}
@@ -442,69 +485,159 @@ export default function HostPage() {
             key="podium"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex-1 flex flex-col items-center justify-end pb-24"
+            className="flex-1 flex flex-col items-center justify-end pb-32"
           >
-            <h1 className="text-6xl font-black text-zinc-800 mb-24 absolute top-16">Podium</h1>
+            <h1 className="text-6xl font-black text-white mb-24 absolute top-16 uppercase tracking-tighter drop-shadow-2xl">Podium</h1>
             
-            <div className="flex items-end gap-4 h-96">
-              {/* 2nd Place */}
-              {podium[1] && (
-                <motion.div 
-                  initial={{ height: 0 }}
-                  animate={{ height: '60%' }}
-                  className="w-48 bg-indigo-400 rounded-t-2xl flex flex-col items-center justify-start pt-8 relative"
-                >
-                  <div className="absolute -top-16 text-2xl font-bold text-zinc-800 bg-white px-4 py-2 rounded-full shadow-md flex items-center gap-2">
-                    <span>{podium[1].avatar}</span>
-                    {podium[1].nickname}
-                  </div>
-                  <span className="text-6xl font-black text-white/50">2</span>
-                  <span className="text-xl font-bold text-white mt-4">{podium[1].score}</span>
-                </motion.div>
-              )}
-              
-              {/* 1st Place */}
-              {podium[0] && (
-                <motion.div 
-                  initial={{ height: 0 }}
-                  animate={{ height: '100%' }}
-                  className="w-48 bg-indigo-600 rounded-t-2xl flex flex-col items-center justify-start pt-8 relative"
-                >
-                  <div className="absolute -top-20 text-3xl font-black text-zinc-800 bg-white px-6 py-3 rounded-full shadow-lg border-4 border-yellow-400 flex items-center gap-3">
-                    <span>{podium[0].avatar}</span>
-                    {podium[0].nickname}
-                  </div>
-                  <span className="text-8xl font-black text-white/50">1</span>
-                  <span className="text-2xl font-bold text-white mt-4">{podium[0].score}</span>
-                </motion.div>
-              )}
+            <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-12 items-end px-12">
+              <div className="flex items-end gap-8 h-[30rem] justify-center">
+                {/* 2nd Place */}
+                {podium[1] && (
+                  <motion.div 
+                    initial={{ height: 0 }}
+                    animate={{ height: '65%' }}
+                    transition={{ type: "spring", stiffness: 100, damping: 20, delay: 0.5 }}
+                    className="w-48 bg-indigo-500/40 backdrop-blur-md border-t border-x border-white/20 rounded-t-[3rem] flex flex-col items-center justify-start pt-12 relative shadow-2xl"
+                  >
+                    <motion.div 
+                      initial={{ scale: 0, y: 20 }}
+                      animate={{ scale: 1, y: 0 }}
+                      transition={{ delay: 1.2 }}
+                      className="absolute -top-24 text-xl font-black text-white bg-white/10 backdrop-blur-xl px-6 py-3 rounded-[1.5rem] border border-white/20 shadow-2xl flex items-center gap-3 whitespace-nowrap"
+                    >
+                      <span className="text-4xl">{podium[1].avatar}</span>
+                      {podium[1].nickname}
+                    </motion.div>
+                    <span className="text-7xl font-black text-white/20">2</span>
+                    <span className="text-2xl font-black text-white mt-6">{podium[1].score}</span>
+                  </motion.div>
+                )}
+                
+                {/* 1st Place */}
+                {podium[0] && (
+                  <motion.div 
+                    initial={{ height: 0 }}
+                    animate={{ height: '100%' }}
+                    transition={{ type: "spring", stiffness: 100, damping: 20, delay: 0.8 }}
+                    className="w-56 bg-indigo-600/60 backdrop-blur-md border-t border-x border-white/30 rounded-t-[3.5rem] flex flex-col items-center justify-start pt-12 relative shadow-[0_0_50px_rgba(99,102,241,0.4)]"
+                  >
+                    <motion.div 
+                      initial={{ scale: 0, y: 20 }}
+                      animate={{ scale: 1, y: 0 }}
+                      transition={{ delay: 1.5 }}
+                      className="absolute -top-32 text-2xl font-black text-white bg-white/15 backdrop-blur-xl px-8 py-5 rounded-[2rem] border-4 border-yellow-400 shadow-[0_0_40px_rgba(250,204,21,0.4)] flex items-center gap-4 whitespace-nowrap"
+                    >
+                      <span className="text-6xl">{podium[0].avatar}</span>
+                      {podium[0].nickname}
+                    </motion.div>
+                    <motion.div 
+                      animate={{ rotate: [0, 10, -10, 0] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="text-8xl font-black text-white/30"
+                    >
+                      1
+                    </motion.div>
+                    <span className="text-3xl font-black text-white mt-8">{podium[0].score}</span>
+                  </motion.div>
+                )}
 
-              {/* 3rd Place */}
-              {podium[2] && (
-                <motion.div 
-                  initial={{ height: 0 }}
-                  animate={{ height: '40%' }}
-                  className="w-48 bg-indigo-300 rounded-t-2xl flex flex-col items-center justify-start pt-8 relative"
-                >
-                  <div className="absolute -top-16 text-xl font-bold text-zinc-800 bg-white px-4 py-2 rounded-full shadow-md flex items-center gap-2">
-                    <span>{podium[2].avatar}</span>
-                    {podium[2].nickname}
-                  </div>
-                  <span className="text-5xl font-black text-white/50">3</span>
-                  <span className="text-lg font-bold text-white mt-4">{podium[2].score}</span>
-                </motion.div>
-              )}
+                {/* 3rd Place */}
+                {podium[2] && (
+                  <motion.div 
+                    initial={{ height: 0 }}
+                    animate={{ height: '45%' }}
+                    transition={{ type: "spring", stiffness: 100, damping: 20, delay: 0.2 }}
+                    className="w-48 bg-indigo-400/30 backdrop-blur-md border-t border-x border-white/10 rounded-t-[2.5rem] flex flex-col items-center justify-start pt-12 relative shadow-2xl"
+                  >
+                    <motion.div 
+                      initial={{ scale: 0, y: 20 }}
+                      animate={{ scale: 1, y: 0 }}
+                      transition={{ delay: 1 }}
+                      className="absolute -top-20 text-lg font-black text-white bg-white/5 backdrop-blur-xl px-5 py-2 rounded-[1.2rem] border border-white/10 shadow-2xl flex items-center gap-2 whitespace-nowrap"
+                    >
+                      <span className="text-3xl">{podium[2].avatar}</span>
+                      {podium[2].nickname}
+                    </motion.div>
+                    <span className="text-6xl font-black text-white/15">3</span>
+                    <span className="text-xl font-black text-white mt-4">{podium[2].score}</span>
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Performance Chart */}
+              <motion.div 
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 1.8 }}
+                className="bg-white/5 backdrop-blur-xl p-8 rounded-[3rem] border border-white/10 shadow-2xl h-[30rem] flex flex-col"
+              >
+                <h3 className="text-xl font-black text-white/40 uppercase tracking-[0.3em] mb-6">Performance over time</h3>
+                <div className="flex-1 min-h-0">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={Array.from({ length: (podium[0]?.scoreHistory?.length || 0) }, (_, i) => {
+                        const point: any = { name: `Q${i}` };
+                        podium.slice(0, 5).forEach(p => {
+                          point[p.nickname] = p.scoreHistory[i];
+                        });
+                        return point;
+                      })}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                      <XAxis 
+                        dataKey="name" 
+                        stroke="rgba(255,255,255,0.3)" 
+                        fontSize={12} 
+                        tickLine={false} 
+                        axisLine={false}
+                      />
+                      <YAxis 
+                        stroke="rgba(255,255,255,0.3)" 
+                        fontSize={12} 
+                        tickLine={false} 
+                        axisLine={false}
+                        tickFormatter={(val) => `${val}`}
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'rgba(10, 5, 2, 0.8)', 
+                          borderRadius: '1rem', 
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          backdropFilter: 'blur(10px)',
+                          color: '#fff'
+                        }}
+                        itemStyle={{ color: '#fff' }}
+                      />
+                      <Legend iconType="circle" />
+                      {podium.slice(0, 5).map((p, idx) => (
+                        <Line 
+                          key={p.id}
+                          type="monotone" 
+                          dataKey={p.nickname} 
+                          stroke={idx === 0 ? '#fbbf24' : idx === 1 ? '#818cf8' : idx === 2 ? '#a5b4fc' : '#6366f1'} 
+                          strokeWidth={idx === 0 ? 4 : 2}
+                          dot={{ r: 4, fill: '#fff', strokeWidth: 2 }}
+                          activeDot={{ r: 8, strokeWidth: 0 }}
+                          animationDuration={2000}
+                        />
+                      ))}
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </motion.div>
             </div>
             
-            <button 
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => {
                 resetGame();
                 router.push('/');
               }}
-              className="mt-24 text-zinc-500 font-bold hover:text-zinc-800 underline"
+              className="mt-32 bg-white/10 backdrop-blur-md border border-white/20 text-white px-12 py-5 rounded-2xl font-black text-xl hover:bg-white/20 transition-all uppercase tracking-[0.3em]"
             >
               Back to Home
-            </button>
+            </motion.button>
           </motion.div>
         )}
       </AnimatePresence>

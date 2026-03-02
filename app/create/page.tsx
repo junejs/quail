@@ -126,138 +126,155 @@ export default function CreateQuizPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 p-4 md:p-8 font-sans">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <button 
+    <div className="min-h-screen p-4 md:p-8 font-sans relative overflow-hidden">
+      <div className="max-w-4xl mx-auto relative z-10">
+        <div className="flex items-center justify-between mb-12">
+          <motion.button 
+            whileHover={{ x: -5 }}
             onClick={() => router.push('/')}
-            className="flex items-center gap-2 text-zinc-500 hover:text-zinc-800 font-bold transition-colors"
+            className="flex items-center gap-3 text-white/50 hover:text-white font-black uppercase tracking-widest text-sm transition-all"
           >
             <ArrowLeft size={20} />
             Back
-          </button>
-          <h1 className="text-3xl font-black text-zinc-800 tracking-tight">Create New Quiz</h1>
-          <button 
+          </motion.button>
+          <h1 className="text-4xl font-black text-white tracking-tighter drop-shadow-2xl">Create New Quiz</h1>
+          <motion.button 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={handleSave}
-            className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-colors shadow-lg"
+            className="flex items-center gap-3 bg-white text-indigo-900 px-8 py-4 rounded-2xl font-black hover:bg-indigo-50 transition-all shadow-[0_0_30px_rgba(255,255,255,0.2)] uppercase tracking-widest text-sm"
           >
             <Save size={20} />
             Save Quiz
-          </button>
+          </motion.button>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm mb-8 border border-zinc-200">
-          <label className="block text-sm font-bold text-zinc-500 uppercase tracking-wider mb-2">Quiz Title</label>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white/10 backdrop-blur-xl p-10 rounded-[2.5rem] shadow-2xl mb-12 border border-white/20"
+        >
+          <label className="block text-[10px] font-black text-white/40 uppercase tracking-[0.4em] mb-3">Quiz Title</label>
           <input 
             type="text" 
-            placeholder="Enter quiz title..."
+            placeholder="Enter a catchy title..."
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full text-2xl font-bold p-4 bg-zinc-50 border-2 border-zinc-100 rounded-xl focus:border-indigo-500 focus:bg-white outline-none transition-all"
+            className="w-full text-4xl font-black p-6 bg-white/5 border-2 border-white/10 rounded-3xl focus:border-white focus:bg-white/10 text-white placeholder:text-white/20 outline-none transition-all"
           />
-        </div>
+        </motion.div>
 
-        <div className="space-y-8">
-          {questions.map((q, qIndex) => (
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              key={q.id} 
-              className="bg-white p-8 rounded-3xl shadow-sm border border-zinc-200 relative group"
-            >
-              <button 
-                onClick={() => handleRemoveQuestion(qIndex)}
-                className="absolute -top-3 -right-3 bg-red-100 text-red-600 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-200"
+        <div className="space-y-12">
+          <AnimatePresence mode="popLayout">
+            {questions.map((q, qIndex) => (
+              <motion.div 
+                layout
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                key={q.id} 
+                className="bg-white/5 backdrop-blur-lg p-10 rounded-[3rem] shadow-xl border border-white/10 relative group hover:bg-white/[0.07] transition-colors"
               >
-                <Trash2 size={18} />
-              </button>
+                <motion.button 
+                  whileHover={{ scale: 1.1, rotate: 90 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => handleRemoveQuestion(qIndex)}
+                  className="absolute -top-4 -right-4 bg-rose-500 text-white p-3 rounded-2xl shadow-xl opacity-0 group-hover:opacity-100 transition-all"
+                >
+                  <Trash2 size={20} />
+                </motion.button>
 
-              <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
-                <div className="flex items-center gap-4">
-                  <span className="bg-indigo-100 text-indigo-700 px-4 py-1 rounded-full text-sm font-bold">Question {qIndex + 1}</span>
-                  <select 
-                    value={q.type}
-                    onChange={(e) => handleQuestionChange(qIndex, 'type', e.target.value)}
-                    className="bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-1 font-bold text-zinc-700 outline-none"
-                  >
-                    <option value="single">Single Choice</option>
-                    <option value="true_false">True/False</option>
-                    <option value="multiple">Multiple Choice</option>
-                  </select>
-                </div>
-                <div className="flex items-center gap-4">
-                  <label className="text-sm font-bold text-zinc-500">Time Limit:</label>
-                  <select 
-                    value={q.timeLimit}
-                    onChange={(e) => handleQuestionChange(qIndex, 'timeLimit', parseInt(e.target.value))}
-                    className="bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-1 font-bold text-zinc-700 outline-none"
-                  >
-                    <option value={5}>5s</option>
-                    <option value={10}>10s</option>
-                    <option value={20}>20s</option>
-                    <option value={30}>30s</option>
-                    <option value={60}>60s</option>
-                  </select>
-                </div>
-              </div>
-
-              <input 
-                type="text" 
-                placeholder="Start typing your question..."
-                value={q.text}
-                onChange={(e) => handleQuestionChange(qIndex, 'text', e.target.value)}
-                className="w-full text-xl font-bold p-4 bg-zinc-50 border-2 border-zinc-100 rounded-xl focus:border-indigo-500 focus:bg-white outline-none transition-all mb-8 text-center"
-              />
-
-              <div className={`grid gap-4 ${q.type === 'true_false' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-2'}`}>
-                {q.options.map((opt: any, oIndex: number) => (
-                  <div key={opt.id} className="relative flex items-center">
-                    <div className={`absolute left-4 w-8 h-8 rounded-lg flex items-center justify-center ${opt.color}`}>
-                      {opt.shape === 'triangle' && <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-b-[10px] border-l-transparent border-r-transparent border-b-white" />}
-                      {opt.shape === 'diamond' && <div className="w-4 h-4 bg-white rotate-45" />}
-                      {opt.shape === 'circle' && <div className="w-5 h-5 bg-white rounded-full" />}
-                      {opt.shape === 'square' && <div className="w-5 h-5 bg-white" />}
-                    </div>
-                    <input 
-                      type="text" 
-                      placeholder={`Option ${oIndex + 1}`}
-                      value={opt.text}
-                      readOnly={q.type === 'true_false'}
-                      onChange={(e) => handleOptionChange(qIndex, oIndex, e.target.value)}
-                      className={`w-full pl-16 pr-12 py-4 bg-zinc-50 border-2 border-zinc-100 rounded-xl focus:border-indigo-500 focus:bg-white outline-none transition-all font-bold ${q.type === 'true_false' ? 'cursor-default' : ''}`}
-                    />
-                    <button 
-                      onClick={() => toggleCorrectAnswer(qIndex, oIndex)}
-                      className={`absolute right-4 p-1 rounded-full transition-colors ${q.correctAnswerIndexes.includes(oIndex) ? 'text-green-500' : 'text-zinc-300 hover:text-zinc-400'}`}
+                <div className="flex flex-wrap justify-between items-center gap-6 mb-10">
+                  <div className="flex items-center gap-6">
+                    <span className="bg-white/10 text-white px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest border border-white/10">Question {qIndex + 1}</span>
+                    <select 
+                      value={q.type}
+                      onChange={(e) => handleQuestionChange(qIndex, 'type', e.target.value)}
+                      className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 font-black text-sm text-white outline-none focus:border-white/30 transition-all cursor-pointer"
                     >
-                      <CheckCircle2 size={24} fill={q.correctAnswerIndexes.includes(oIndex) ? 'currentColor' : 'none'} />
-                    </button>
+                      <option value="single" className="bg-zinc-900">Single Choice</option>
+                      <option value="true_false" className="bg-zinc-900">True/False</option>
+                      <option value="multiple" className="bg-zinc-900">Multiple Choice</option>
+                    </select>
                   </div>
-                ))}
-              </div>
+                  <div className="flex items-center gap-4">
+                    <label className="text-[10px] font-black text-white/40 uppercase tracking-widest">Time Limit:</label>
+                    <select 
+                      value={q.timeLimit}
+                      onChange={(e) => handleQuestionChange(qIndex, 'timeLimit', parseInt(e.target.value))}
+                      className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 font-black text-sm text-white outline-none focus:border-white/30 transition-all cursor-pointer"
+                    >
+                      <option value={5} className="bg-zinc-900">5s</option>
+                      <option value={10} className="bg-zinc-900">10s</option>
+                      <option value={20} className="bg-zinc-900">20s</option>
+                      <option value={30} className="bg-zinc-900">30s</option>
+                      <option value={60} className="bg-zinc-900">60s</option>
+                    </select>
+                  </div>
+                </div>
 
-              <div className="mt-8">
-                <label className="block text-sm font-bold text-zinc-500 uppercase tracking-wider mb-2">Answer Explanation (Optional)</label>
-                <textarea 
-                  placeholder="Explain why the answer is correct..."
-                  value={q.explanation || ''}
-                  onChange={(e) => handleQuestionChange(qIndex, 'explanation', e.target.value)}
-                  className="w-full p-4 bg-zinc-50 border-2 border-zinc-100 rounded-xl focus:border-indigo-500 focus:bg-white outline-none transition-all font-medium text-zinc-700 min-h-[100px] resize-none"
+                <input 
+                  type="text" 
+                  placeholder="What's the question?"
+                  value={q.text}
+                  onChange={(e) => handleQuestionChange(qIndex, 'text', e.target.value)}
+                  className="w-full text-3xl font-black p-8 bg-white/5 border-2 border-white/10 rounded-[2rem] focus:border-white focus:bg-white/10 text-white placeholder:text-white/10 outline-none transition-all mb-10 text-center"
                 />
-              </div>
-            </motion.div>
-          ))}
+
+                <div className={`grid gap-6 ${q.type === 'true_false' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-2'}`}>
+                  {q.options.map((opt: any, oIndex: number) => (
+                    <div key={opt.id} className="relative flex items-center group/opt">
+                      <div className={`absolute left-5 w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${opt.color} group-hover/opt:scale-110 transition-transform`}>
+                        {opt.shape === 'triangle' && <div className="w-0 h-0 border-l-[8px] border-r-[8px] border-b-[14px] border-l-transparent border-r-transparent border-b-white" />}
+                        {opt.shape === 'diamond' && <div className="w-6 h-6 bg-white rotate-45" />}
+                        {opt.shape === 'circle' && <div className="w-7 h-7 bg-white rounded-full" />}
+                        {opt.shape === 'square' && <div className="w-7 h-7 bg-white" />}
+                      </div>
+                      <input 
+                        type="text" 
+                        placeholder={`Option ${oIndex + 1}`}
+                        value={opt.text}
+                        readOnly={q.type === 'true_false'}
+                        onChange={(e) => handleOptionChange(qIndex, oIndex, e.target.value)}
+                        className={`w-full pl-20 pr-16 py-6 bg-white/5 border-2 border-white/10 rounded-2xl focus:border-white focus:bg-white/10 text-white placeholder:text-white/10 outline-none transition-all font-black text-xl ${q.type === 'true_false' ? 'cursor-default' : ''} ${q.correctAnswerIndexes.includes(oIndex) ? 'border-emerald-500/50 bg-emerald-500/5' : ''}`}
+                      />
+                      <motion.button 
+                        whileHover={{ scale: 1.2 }}
+                        whileTap={{ scale: 0.8 }}
+                        onClick={() => toggleCorrectAnswer(qIndex, oIndex)}
+                        className={`absolute right-5 p-2 rounded-full transition-all ${q.correctAnswerIndexes.includes(oIndex) ? 'text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.5)]' : 'text-white/10 hover:text-white/30'}`}
+                      >
+                        <CheckCircle2 size={32} fill={q.correctAnswerIndexes.includes(oIndex) ? 'currentColor' : 'none'} />
+                      </motion.button>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-10">
+                  <label className="block text-[10px] font-black text-white/40 uppercase tracking-[0.4em] mb-3">Answer Explanation (Optional)</label>
+                  <textarea 
+                    placeholder="Explain the logic behind the answer..."
+                    value={q.explanation || ''}
+                    onChange={(e) => handleQuestionChange(qIndex, 'explanation', e.target.value)}
+                    className="w-full p-6 bg-white/5 border-2 border-white/10 rounded-2xl focus:border-white focus:bg-white/10 text-white placeholder:text-white/10 outline-none transition-all font-bold text-lg min-h-[120px] resize-none"
+                  />
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
 
-        <button 
+        <motion.button 
+          whileHover={{ scale: 1.02, backgroundColor: 'rgba(255,255,255,0.1)' }}
+          whileTap={{ scale: 0.98 }}
           onClick={handleAddQuestion}
-          className="w-full mt-8 border-4 border-dashed border-zinc-200 p-8 rounded-3xl text-zinc-400 hover:text-indigo-500 hover:border-indigo-200 hover:bg-indigo-50 transition-all flex flex-col items-center gap-2 group"
+          className="w-full mt-12 border-4 border-dashed border-white/10 p-12 rounded-[3rem] text-white/20 hover:text-white hover:border-white/30 transition-all flex flex-col items-center gap-4 group"
         >
-          <div className="bg-zinc-100 p-3 rounded-full group-hover:bg-indigo-100 transition-colors">
-            <Plus size={32} />
+          <div className="bg-white/5 p-5 rounded-full group-hover:bg-white/10 transition-colors border border-white/10">
+            <Plus size={40} />
           </div>
-          <span className="text-xl font-black">Add Question</span>
-        </button>
+          <span className="text-2xl font-black uppercase tracking-widest">Add Question</span>
+        </motion.button>
       </div>
     </div>
   );

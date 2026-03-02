@@ -136,141 +136,205 @@ function HomeContent() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-100 flex flex-col items-center justify-center p-4 font-sans">
-      <div className="absolute top-4 right-4">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 font-sans overflow-hidden relative">
+      {/* Floating Elements */}
+      <motion.div 
+        animate={{ 
+          y: [0, -20, 0],
+          rotate: [0, 5, 0]
+        }}
+        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-20 left-[15%] text-indigo-500/20 select-none hidden lg:block z-0"
+      >
+        <PlusCircle size={120} />
+      </motion.div>
+      <motion.div 
+        animate={{ 
+          y: [0, 20, 0],
+          rotate: [0, -5, 0]
+        }}
+        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute bottom-20 right-[15%] text-purple-500/20 select-none hidden lg:block z-0"
+      >
+        <Play size={140} />
+      </motion.div>
+
+      <div className="absolute top-4 right-4 z-50">
         <button 
           onClick={toggleMute}
-          className="p-3 rounded-full bg-white shadow-md text-zinc-600 hover:bg-zinc-50 transition-colors"
+          className="p-3 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 transition-all"
         >
           {isMuted ? <VolumeX size={24} /> : <Volume2 size={24} />}
         </button>
       </div>
+
       <motion.div 
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="bg-white p-8 rounded-3xl shadow-xl max-w-md w-full text-center"
+        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        className="relative z-10 w-full max-w-md"
       >
-        <h1 className="text-5xl font-black tracking-tighter text-indigo-600 mb-8">
-          quail
-        </h1>
+        <div className="bg-white/10 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white/20 shadow-2xl text-center overflow-hidden">
+          {/* Decorative inner glow */}
+          <div className="absolute -top-24 -left-24 w-48 h-48 bg-indigo-500/30 blur-3xl rounded-full pointer-events-none" />
+          
+          <motion.h1 
+            initial={{ letterSpacing: "0.2em", opacity: 0 }}
+            animate={{ letterSpacing: "-0.05em", opacity: 1 }}
+            transition={{ duration: 1, ease: "easeOut" }}
+            className="text-7xl font-black text-white mb-2 drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]"
+          >
+            quail
+          </motion.h1>
+          <p className="text-indigo-200/60 font-medium tracking-widest uppercase text-[10px] mb-10">The Ultimate Quiz Experience</p>
 
-        {!showHostOptions ? (
-          <>
-            <form onSubmit={handleJoinGame} className="space-y-4 mb-8">
-              <div>
-                <input
-                  type="text"
-                  placeholder="Game PIN"
-                  value={inputPin}
-                  onChange={(e) => setInputPin(e.target.value)}
-                  className="w-full text-center text-2xl font-bold p-4 bg-zinc-50 border-2 border-zinc-100 rounded-xl focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100 outline-none transition-all"
-                  maxLength={6}
-                />
-              </div>
-              <div>
-                <input
-                  type="text"
-                  placeholder="Nickname"
-                  value={inputNickname}
-                  onChange={(e) => setInputNickname(e.target.value)}
-                  className="w-full text-center text-xl font-medium p-4 bg-zinc-50 border-2 border-zinc-100 rounded-xl focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100 outline-none transition-all"
-                  maxLength={15}
-                />
-              </div>
-              
-              {error && <p className="text-red-500 font-medium">{error}</p>}
-              
-              <button
-                type="submit"
-                disabled={!isConnected || isJoining}
-                className="w-full bg-zinc-900 text-white font-bold text-xl p-4 rounded-xl hover:bg-zinc-800 transition-colors disabled:opacity-50 shadow-lg"
-              >
-                {isJoining ? 'Joining...' : 'Enter'}
-              </button>
-            </form>
-
-            <div className="relative py-4">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-zinc-200"></div>
-              </div>
-              <div className="relative flex justify-center">
-                <span className="bg-white px-4 text-sm text-zinc-500 font-medium uppercase tracking-widest">Host Mode</span>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setShowHostOptions(true)}
-              disabled={!isConnected}
-              className="w-full mt-4 bg-indigo-100 text-indigo-700 font-bold text-lg p-4 rounded-xl hover:bg-indigo-200 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+          {!showHostOptions ? (
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
             >
-              <Settings size={20} />
-              Host Options
-            </button>
-          </>
-        ) : (
-          <div className="space-y-6">
-            <div className="text-left">
-              <label className="block text-xs font-bold text-zinc-400 uppercase tracking-widest mb-2">Select Quiz</label>
-              <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-                {quizzes.map((quiz) => (
-                  <button
-                    key={quiz.id}
-                    onClick={() => setSelectedQuiz(quiz)}
-                    className={`w-full text-left p-4 rounded-xl border-2 transition-all flex justify-between items-center ${
-                      selectedQuiz?.id === quiz.id 
-                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700' 
-                        : 'border-zinc-100 bg-zinc-50 text-zinc-600 hover:border-zinc-200'
-                    }`}
+              <form onSubmit={handleJoinGame} className="space-y-4 mb-8">
+                <div className="group relative">
+                  <input
+                    type="text"
+                    placeholder="Game PIN"
+                    value={inputPin}
+                    onChange={(e) => setInputPin(e.target.value)}
+                    className="w-full text-center text-3xl font-black p-5 bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-white/20 focus:border-indigo-500 focus:bg-white/10 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all tracking-widest"
+                    maxLength={6}
+                  />
+                  <div className="absolute inset-0 rounded-2xl bg-indigo-500/20 opacity-0 group-focus-within:opacity-100 blur-xl transition-opacity pointer-events-none" />
+                </div>
+                <div className="group relative">
+                  <input
+                    type="text"
+                    placeholder="Nickname"
+                    value={inputNickname}
+                    onChange={(e) => setInputNickname(e.target.value)}
+                    className="w-full text-center text-xl font-bold p-5 bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-white/20 focus:border-indigo-500 focus:bg-white/10 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all"
+                    maxLength={15}
+                  />
+                </div>
+                
+                {error && (
+                  <motion.p 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-rose-400 font-bold text-sm"
                   >
-                    <span className="font-bold truncate">{quiz.title}</span>
-                    <span className="text-xs opacity-60">{quiz.questions.length} Qs</span>
-                  </button>
-                ))}
+                    {error}
+                  </motion.p>
+                )}
+                
+                <button
+                  type="submit"
+                  disabled={!isConnected || isJoining}
+                  className="w-full bg-indigo-600 text-white font-black text-2xl p-5 rounded-2xl hover:bg-indigo-500 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 shadow-[0_0_20px_rgba(79,70,229,0.4)]"
+                >
+                  {isJoining ? 'Joining...' : 'JOIN GAME'}
+                </button>
+              </form>
+
+              <div className="relative py-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-white/10"></div>
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="bg-[#1a1a1a] px-4 text-[10px] text-white/30 font-black uppercase tracking-[0.3em]">Or Host a Session</span>
+                </div>
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
               <button
-                onClick={() => router.push('/create')}
-                className="flex flex-col items-center gap-2 p-4 bg-zinc-50 border-2 border-zinc-100 rounded-2xl text-zinc-600 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 transition-all"
+                onClick={() => setShowHostOptions(true)}
+                disabled={!isConnected}
+                className="w-full bg-white/5 text-white/70 font-bold text-sm p-4 rounded-xl border border-white/10 hover:bg-white/10 hover:text-white transition-all flex items-center justify-center gap-2"
               >
-                <PlusCircle size={24} />
-                <span className="font-bold text-sm">Create Quiz</span>
+                <Settings size={16} />
+                HOST OPTIONS
               </button>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-6"
+            >
+              <div className="text-left">
+                <label className="block text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-3">Select Quiz</label>
+                <div className="space-y-2 max-h-56 overflow-y-auto pr-2 custom-scrollbar">
+                  {quizzes.map((quiz) => (
+                    <button
+                      key={quiz.id}
+                      onClick={() => setSelectedQuiz(quiz)}
+                      className={`w-full text-left p-4 rounded-2xl border transition-all flex justify-between items-center group ${
+                        selectedQuiz?.id === quiz.id 
+                          ? 'border-indigo-500 bg-indigo-500/20 text-white shadow-[0_0_15px_rgba(99,102,241,0.3)]' 
+                          : 'border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:bg-white/10'
+                      }`}
+                    >
+                      <div className="flex flex-col">
+                        <span className="font-bold text-sm group-hover:text-white transition-colors">{quiz.title}</span>
+                        <span className="text-[10px] opacity-40">{quiz.questions.length} Questions</span>
+                      </div>
+                      {selectedQuiz?.id === quiz.id && (
+                        <motion.div layoutId="active-quiz" className="w-2 h-2 bg-indigo-500 rounded-full shadow-[0_0_8px_rgba(99,102,241,1)]" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={() => router.push('/create')}
+                  className="flex flex-col items-center gap-2 p-5 bg-white/5 border border-white/10 rounded-2xl text-white/60 hover:border-indigo-500/50 hover:bg-indigo-500/10 hover:text-white transition-all group"
+                >
+                  <PlusCircle size={24} className="group-hover:scale-110 transition-transform" />
+                  <span className="font-black text-[10px] uppercase tracking-widest">Create</span>
+                </button>
+                <button
+                  onClick={() => router.push('/history')}
+                  className="flex flex-col items-center gap-2 p-5 bg-white/5 border border-white/10 rounded-2xl text-white/60 hover:border-amber-500/50 hover:bg-amber-500/10 hover:text-white transition-all group"
+                >
+                  <History size={24} className="group-hover:scale-110 transition-transform" />
+                  <span className="font-black text-[10px] uppercase tracking-widest">History</span>
+                </button>
+              </div>
+
               <button
-                onClick={() => router.push('/history')}
-                className="flex flex-col items-center gap-2 p-4 bg-zinc-50 border-2 border-zinc-100 rounded-2xl text-zinc-600 hover:border-amber-200 hover:bg-amber-50 hover:text-amber-600 transition-all"
+                onClick={handleHostGame}
+                disabled={!selectedQuiz}
+                className="w-full flex items-center justify-center gap-3 p-5 bg-indigo-600 rounded-2xl text-white hover:bg-indigo-500 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_20px_rgba(79,70,229,0.4)] disabled:opacity-50"
               >
-                <History size={24} />
-                <span className="font-bold text-sm">History</span>
+                <Play size={24} fill="currentColor" />
+                <span className="font-black text-lg uppercase tracking-wider">Start Lobby</span>
               </button>
+
+              <button
+                onClick={() => setShowHostOptions(false)}
+                className="text-white/30 font-black text-[10px] uppercase tracking-widest hover:text-white/60 transition-colors"
+              >
+                ← Back to Join
+              </button>
+            </motion.div>
+          )}
+          
+          {!isConnected && (
+            <div className="mt-8 pt-6 border-t border-white/5">
+              <p className="text-[10px] text-white/20 flex items-center justify-center gap-2 font-black uppercase tracking-widest">
+                <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-ping"></span>
+                Connecting to server
+              </p>
             </div>
-
-            <button
-              onClick={handleHostGame}
-              disabled={!selectedQuiz}
-              className="w-full flex items-center justify-center gap-2 p-4 bg-indigo-600 rounded-2xl text-white hover:bg-indigo-700 transition-all shadow-lg disabled:opacity-50"
-            >
-              <Play size={24} />
-              <span className="font-bold text-lg">Start Lobby</span>
-            </button>
-
-            <button
-              onClick={() => setShowHostOptions(false)}
-              className="text-zinc-400 font-bold text-sm hover:text-zinc-600 transition-colors"
-            >
-              Back to Player Join
-            </button>
-          </div>
-        )}
-        
-        {!isConnected && (
-          <p className="mt-4 text-sm text-zinc-500 flex items-center justify-center gap-2">
-            <span className="w-2 h-2 bg-zinc-300 rounded-full animate-pulse"></span>
-            Connecting to server...
-          </p>
-        )}
+          )}
+        </div>
       </motion.div>
+
+      {/* Footer info */}
+      <div className="absolute bottom-6 text-white/10 text-[10px] font-black uppercase tracking-[0.5em] select-none">
+        Quail Quiz Engine v2.0
+      </div>
     </div>
   );
 }

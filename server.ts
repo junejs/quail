@@ -25,6 +25,7 @@ interface Player {
   avatar: string;
   score: number;
   streak: number;
+  scoreHistory: number[];
   hasAnswered: boolean;
   lastAnswerCorrect: boolean;
   totalResponseTime: number; // For tie-breaking
@@ -173,6 +174,7 @@ io.on('connection', (socket) => {
       avatar: getRandomAvatar(),
       score: 0,
       streak: 0,
+      scoreHistory: [0],
       hasAnswered: false,
       lastAnswerCorrect: false,
       totalResponseTime: 0,
@@ -370,6 +372,12 @@ io.on('connection', (socket) => {
     const room = rooms[pin];
     if (room && room.hostId === socket.id) {
       room.state = 'leaderboard';
+      
+      // Update score history for all players
+      Object.values(room.players).forEach(p => {
+        p.scoreHistory.push(p.score);
+      });
+
       const leaderboard = Object.values(room.players)
         .sort((a, b) => {
           if (b.score !== a.score) return b.score - a.score;
