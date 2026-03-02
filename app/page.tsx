@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'motion/react';
 import { useSocket } from '@/components/socket-provider';
 import { useGameStore } from '@/lib/store';
@@ -9,8 +9,9 @@ import { sampleQuiz } from '@/lib/quiz-data';
 import { PlusCircle, Play, Settings, Volume2, VolumeX, History } from 'lucide-react';
 import { audioManager } from '@/lib/audio-manager';
 
-export default function Home() {
+function HomeContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { socket, isConnected } = useSocket();
   const { 
     setPin, setNickname, setAvatar, setIsHost, setGameState, 
@@ -18,12 +19,20 @@ export default function Home() {
     sessionId, setSessionId, setPlayers
   } = useGameStore();
   
-  const [inputPin, setInputPin] = useState('');
+  const [inputPin, setInputPin] = useState(searchParams.get('pin') || '');
   const [inputNickname, setInputNickname] = useState('');
   const [error, setError] = useState('');
   const [isJoining, setIsJoining] = useState(false);
   const [showHostOptions, setShowHostOptions] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+
+  useEffect(() => {
+    const pinFromUrl = searchParams.get('pin');
+    if (pinFromUrl && !inputPin) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setInputPin(pinFromUrl);
+    }
+  }, [searchParams, inputPin]);
 
   useEffect(() => {
     if (!sessionId && typeof window !== 'undefined') {
@@ -263,5 +272,13 @@ export default function Home() {
         )}
       </motion.div>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-zinc-100 flex items-center justify-center font-sans">Loading...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }

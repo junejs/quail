@@ -7,7 +7,8 @@ import { useSocket } from '@/components/socket-provider';
 import { useGameStore } from '@/lib/store';
 import confetti from 'canvas-confetti';
 import { audioManager } from '@/lib/audio-manager';
-import { Volume2, VolumeX } from 'lucide-react';
+import { Volume2, VolumeX, QrCode } from 'lucide-react';
+import { QRCodeCanvas } from 'qrcode.react';
 
 export default function HostPage() {
   const router = useRouter();
@@ -21,6 +22,9 @@ export default function HostPage() {
   const [podium, setPodium] = useState<any[]>([]);
   const [answerCounts, setAnswerCounts] = useState<Record<number, number>>({});
   const [isMuted, setIsMuted] = useState(false);
+  const [showQR, setShowQR] = useState(false);
+
+  const joinUrl = typeof window !== 'undefined' && pin ? `${window.location.origin}/?pin=${pin}` : '';
 
   useEffect(() => {
     if (!isHost || !pin || !socket || !selectedQuiz) {
@@ -162,7 +166,19 @@ export default function HostPage() {
               <div className="flex items-center gap-8">
                 <div>
                   <h2 className="text-2xl font-bold text-zinc-500">Join at the App with Game PIN:</h2>
-                  <h1 className="text-7xl font-black tracking-tighter text-indigo-600 mt-2">{pin}</h1>
+                  <div className="flex items-center gap-6 mt-2">
+                    <h1 className="text-7xl font-black tracking-tighter text-indigo-600">{pin}</h1>
+                    <button 
+                      onClick={() => setShowQR(!showQR)}
+                      className={`p-4 rounded-2xl transition-all flex items-center gap-2 font-bold ${
+                        showQR ? 'bg-indigo-600 text-white shadow-lg scale-105' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                      }`}
+                      title="Show QR Code"
+                    >
+                      <QrCode size={32} />
+                      <span className="text-xl">Scan to Join</span>
+                    </button>
+                  </div>
                   <p className="mt-4 text-xl font-bold text-zinc-400">Quiz: {selectedQuiz.title}</p>
                 </div>
                 <button 
@@ -180,7 +196,48 @@ export default function HostPage() {
                 Start
               </button>
             </div>
-            <div className="flex-1 p-8">
+            <div className="flex-1 p-8 relative">
+              <AnimatePresence>
+                {showQR && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                    className="absolute inset-0 z-50 flex items-center justify-center bg-zinc-100/80 backdrop-blur-sm p-8"
+                  >
+                    <div className="bg-white p-12 rounded-[3rem] shadow-2xl flex flex-col items-center text-center border-8 border-indigo-600">
+                      <h2 className="text-4xl font-black text-zinc-800 mb-8">Scan to Join Game</h2>
+                      <div className="bg-white p-6 rounded-3xl shadow-inner border-4 border-zinc-100">
+                        <QRCodeCanvas 
+                          value={joinUrl} 
+                          size={320}
+                          level="H"
+                          includeMargin={true}
+                          imageSettings={{
+                            src: "/favicon.ico", // Optional: add logo if exists
+                            x: undefined,
+                            y: undefined,
+                            height: 60,
+                            width: 60,
+                            excavate: true,
+                          }}
+                        />
+                      </div>
+                      <div className="mt-8">
+                        <p className="text-2xl font-bold text-zinc-500 mb-2">Game PIN</p>
+                        <p className="text-6xl font-black text-indigo-600 tracking-widest">{pin}</p>
+                      </div>
+                      <button 
+                        onClick={() => setShowQR(false)}
+                        className="mt-12 bg-zinc-900 text-white px-12 py-4 rounded-2xl text-2xl font-bold hover:bg-zinc-800 transition-colors"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <div className="flex justify-between items-center mb-8">
                 <h3 className="text-3xl font-bold text-zinc-800">Players ({players.length})</h3>
               </div>
