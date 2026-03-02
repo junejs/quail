@@ -9,7 +9,7 @@ import { useGameStore } from '@/lib/store';
 export default function PlayPage() {
   const router = useRouter();
   const { socket } = useSocket();
-  const { pin, nickname, isHost, gameState, setGameState, score, setScore, streak, setStreak, selectedQuiz } = useGameStore();
+  const { pin, nickname, avatar, isHost, gameState, setGameState, score, setScore, streak, setStreak, selectedQuiz } = useGameStore();
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(-1);
   const [hasAnswered, setHasAnswered] = useState(false);
@@ -122,8 +122,11 @@ export default function PlayPage() {
           >
             <h1 className="text-4xl font-black text-zinc-800 mb-4">You&apos;re in!</h1>
             <p className="text-2xl font-bold text-zinc-500">See your nickname on screen</p>
-            <div className="mt-12 text-3xl font-black text-indigo-600 bg-white px-8 py-4 rounded-2xl shadow-sm">
-              {nickname}
+            <div className="mt-12 flex flex-col items-center gap-4">
+              <div className="text-8xl animate-bounce">{avatar}</div>
+              <div className="text-3xl font-black text-indigo-600 bg-white px-8 py-4 rounded-2xl shadow-sm">
+                {nickname}
+              </div>
             </div>
           </motion.div>
         )}
@@ -196,6 +199,8 @@ export default function PlayPage() {
               {answerResult.isCorrect ? 'Correct!' : 'Incorrect'}
             </h1>
             
+            <div className="text-6xl mb-6">{avatar}</div>
+            
             <div className="bg-black/20 px-8 py-4 rounded-2xl mb-4 w-full max-w-xs">
               <p className="text-xl font-bold opacity-80 mb-1">Total Score</p>
               <p className="text-5xl font-black">{answerResult.score}</p>
@@ -236,6 +241,7 @@ export default function PlayPage() {
             className="flex-1 flex flex-col items-center justify-center bg-indigo-600 text-white p-8 text-center"
           >
             <h1 className="text-4xl font-black mb-8">You&apos;re in {score > 0 ? 'the game' : 'the lobby'}!</h1>
+            <div className="text-6xl mb-6">{avatar}</div>
             <div className="bg-black/20 px-8 py-4 rounded-2xl">
               <p className="text-xl font-bold opacity-80 mb-1">Current Score</p>
               <p className="text-4xl font-black">{score}</p>
@@ -253,6 +259,8 @@ export default function PlayPage() {
           >
             <h1 className="text-5xl font-black mb-4">Game Over!</h1>
             
+            <div className="text-7xl mb-4">{avatar}</div>
+
             <div className="bg-white text-indigo-600 px-12 py-8 rounded-3xl shadow-xl my-8">
               <p className="text-2xl font-bold opacity-80 mb-2">You placed</p>
               <p className="text-8xl font-black">

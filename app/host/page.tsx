@@ -155,8 +155,9 @@ export default function HostPage() {
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     key={p.id} 
-                    className="bg-white px-6 py-3 rounded-xl shadow-sm text-xl font-bold text-zinc-800"
+                    className="bg-white px-6 py-3 rounded-xl shadow-sm text-xl font-bold text-zinc-800 flex items-center gap-3"
                   >
+                    <span className="text-2xl">{p.avatar}</span>
                     {p.nickname}
                   </motion.div>
                 ))}
@@ -310,7 +311,10 @@ export default function HostPage() {
                 >
                   <div className="flex items-center gap-6">
                     <span className="text-3xl font-black text-zinc-400 w-8">{index + 1}</span>
-                    <span className="text-3xl font-bold text-zinc-800">{p.nickname}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-4xl">{p.avatar}</span>
+                      <span className="text-3xl font-bold text-zinc-800">{p.nickname}</span>
+                    </div>
                   </div>
                   <div className="flex items-center gap-4">
                     {p.streak >= 3 && (
@@ -341,7 +345,8 @@ export default function HostPage() {
                   animate={{ height: '60%' }}
                   className="w-48 bg-indigo-400 rounded-t-2xl flex flex-col items-center justify-start pt-8 relative"
                 >
-                  <div className="absolute -top-16 text-2xl font-bold text-zinc-800 bg-white px-4 py-2 rounded-full shadow-md">
+                  <div className="absolute -top-16 text-2xl font-bold text-zinc-800 bg-white px-4 py-2 rounded-full shadow-md flex items-center gap-2">
+                    <span>{podium[1].avatar}</span>
                     {podium[1].nickname}
                   </div>
                   <span className="text-6xl font-black text-white/50">2</span>
@@ -356,7 +361,8 @@ export default function HostPage() {
                   animate={{ height: '100%' }}
                   className="w-48 bg-indigo-600 rounded-t-2xl flex flex-col items-center justify-start pt-8 relative"
                 >
-                  <div className="absolute -top-20 text-3xl font-black text-zinc-800 bg-white px-6 py-3 rounded-full shadow-lg border-4 border-yellow-400">
+                  <div className="absolute -top-20 text-3xl font-black text-zinc-800 bg-white px-6 py-3 rounded-full shadow-lg border-4 border-yellow-400 flex items-center gap-3">
+                    <span>{podium[0].avatar}</span>
                     {podium[0].nickname}
                   </div>
                   <span className="text-8xl font-black text-white/50">1</span>
@@ -371,7 +377,8 @@ export default function HostPage() {
                   animate={{ height: '40%' }}
                   className="w-48 bg-indigo-300 rounded-t-2xl flex flex-col items-center justify-start pt-8 relative"
                 >
-                  <div className="absolute -top-16 text-xl font-bold text-zinc-800 bg-white px-4 py-2 rounded-full shadow-md">
+                  <div className="absolute -top-16 text-xl font-bold text-zinc-800 bg-white px-4 py-2 rounded-full shadow-md flex items-center gap-2">
+                    <span>{podium[2].avatar}</span>
                     {podium[2].nickname}
                   </div>
                   <span className="text-5xl font-black text-white/50">3</span>

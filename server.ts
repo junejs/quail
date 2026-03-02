@@ -20,6 +20,7 @@ app.prepare().then(() => {
 interface Player {
   id: string;
   nickname: string;
+  avatar: string;
   score: number;
   streak: number;
   hasAnswered: boolean;
@@ -28,6 +29,12 @@ interface Player {
   lastPointsEarned?: number;
   lastSpeedBonus?: number;
   lastStreakBonus?: number;
+}
+
+const AVATARS = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🦆', '🦅', '🦉', '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🐛', '🦋', '🐌', '🐞', '🐜', '🦟', '🦗', '🕷', '🦂', '🐢', '🐍', '🦎', '🦖', '🦕', '🐙', '🦑', '🦐', '🦞', '🦀', '🐡', '🐠', '🐟', '🐬', '🐳', '🐋', '🦈', '🐊', '🐅', '🐆', '🦓', '🦍', '🦧', '🐘', '🦛', '🦏', '🐪', '🐫', '🦒', '🦘', '🐃', '🐂', '🐄', '🐎', '🐖', '🐏', '🐑', '🐐', '🦌', '🐕', '🐩', '🐈', '🐓', '🦃', '🦚', '🦜', '🦢', '🦩', '🕊', '🐇', '🦝', '🦨', '🦡', '🦦', '🦥', '🐁', '🐀', '🐿', '🦔'];
+
+function getRandomAvatar() {
+  return AVATARS[Math.floor(Math.random() * AVATARS.length)];
 }
 
 interface Room {
@@ -115,6 +122,7 @@ io.on('connection', (socket) => {
     const player: Player = {
       id: socket.id,
       nickname,
+      avatar: getRandomAvatar(),
       score: 0,
       streak: 0,
       hasAnswered: false,

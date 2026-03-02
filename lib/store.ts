@@ -18,6 +18,7 @@ export interface Quiz {
 interface GameState {
   pin: string | null;
   nickname: string | null;
+  avatar: string | null;
   isHost: boolean;
   gameState: 'idle' | 'lobby' | 'question' | 'question_result' | 'leaderboard' | 'podium';
   players: any[];
@@ -28,6 +29,7 @@ interface GameState {
   selectedQuiz: Quiz | null;
   setPin: (pin: string | null) => void;
   setNickname: (nickname: string | null) => void;
+  setAvatar: (avatar: string | null) => void;
   setIsHost: (isHost: boolean) => void;
   setGameState: (state: 'idle' | 'lobby' | 'question' | 'question_result' | 'leaderboard' | 'podium') => void;
   setPlayers: (players: any[]) => void;
@@ -41,6 +43,7 @@ interface GameState {
 export const useGameStore = create<GameState>((set) => ({
   pin: null,
   nickname: null,
+  avatar: null,
   isHost: false,
   gameState: 'idle',
   players: [],
@@ -51,6 +54,7 @@ export const useGameStore = create<GameState>((set) => ({
   selectedQuiz: null,
   setPin: (pin) => set({ pin }),
   setNickname: (nickname) => set({ nickname }),
+  setAvatar: (avatar) => set({ avatar }),
   setIsHost: (isHost) => set({ isHost }),
   setGameState: (gameState) => set({ gameState }),
   setPlayers: (players) => set({ players }),

@@ -12,7 +12,7 @@ export default function Home() {
   const router = useRouter();
   const { socket, isConnected } = useSocket();
   const { 
-    setPin, setNickname, setIsHost, setGameState, 
+    setPin, setNickname, setAvatar, setIsHost, setGameState, 
     quizzes, addQuiz, selectedQuiz, setSelectedQuiz 
   } = useGameStore();
   
@@ -35,6 +35,7 @@ export default function Home() {
     const onJoinedRoom = ({ pin, player, quiz }: { pin: string, player: any, quiz: any }) => {
       setPin(pin);
       setNickname(player.nickname);
+      setAvatar(player.avatar);
       setIsHost(false);
       setGameState('lobby');
       setSelectedQuiz(quiz);
@@ -53,7 +54,7 @@ export default function Home() {
       socket.off('joined_room', onJoinedRoom);
       socket.off('error', onError);
     };
-  }, [socket, router, setPin, setNickname, setIsHost, setGameState, setSelectedQuiz]);
+  }, [socket, router, setPin, setNickname, setAvatar, setIsHost, setGameState, setSelectedQuiz]);
 
   const handleHostGame = () => {
     if (!socket) return;
