@@ -105,7 +105,7 @@ export default function CreateQuizPage() {
     setQuestions(newQuestions);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!title.trim()) {
       alert('Please enter a quiz title');
       return;
@@ -121,7 +121,7 @@ export default function CreateQuizPage() {
       questions,
     };
 
-    addQuiz(newQuiz);
+    await addQuiz(newQuiz);
     router.push('/');
   };
 

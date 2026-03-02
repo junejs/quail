@@ -10,6 +10,7 @@
     "clean": "next clean"
   },
   "dependencies": {
+    "@electric-sql/pglite": "^0.3.15",
     "@google/genai": "^1.17.0",
     "@hookform/resolvers": "^5.2.1",
     "@types/canvas-confetti": "^1.9.0",

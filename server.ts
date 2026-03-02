@@ -2,6 +2,7 @@ import { createServer } from 'http';
 import { parse } from 'url';
 import next from 'next';
 import { Server } from 'socket.io';
+import { getDb, saveQuiz, getAllQuizzes, saveGameResult, getGameResults } from './lib/db';
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = '0.0.0.0';
@@ -62,6 +63,37 @@ const server = createServer(async (req, res) => {
     if (pathname === '/api/health') {
       res.statusCode = 200;
       res.end('ok');
+      return;
+    }
+
+    if (pathname === '/api/quizzes' && req.method === 'GET') {
+      const quizzes = await getAllQuizzes();
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify(quizzes));
+      return;
+    }
+
+    if (pathname === '/api/quizzes' && req.method === 'POST') {
+      let body = '';
+      req.on('data', chunk => { body += chunk; });
+      req.on('end', async () => {
+        try {
+          const quiz = JSON.parse(body);
+          await saveQuiz(quiz);
+          res.statusCode = 201;
+          res.end(JSON.stringify({ success: true }));
+        } catch (e) {
+          res.statusCode = 400;
+          res.end(JSON.stringify({ error: 'Invalid JSON' }));
+        }
+      });
+      return;
+    }
+
+    if (pathname === '/api/results' && req.method === 'GET') {
+      const results = await getGameResults();
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify(results));
       return;
     }
 
@@ -273,12 +305,25 @@ io.on('connection', (socket) => {
   });
 
   // Host ends game
-  socket.on('end_game', (pin) => {
+  socket.on('end_game', async (pin) => {
     const room = rooms[pin];
     if (room && room.hostId === socket.id) {
       room.state = 'podium';
       const finalStandings = Object.values(room.players)
         .sort((a, b) => b.score - a.score);
+      
+      // Save game result to DB
+      try {
+        await saveGameResult({
+          quiz_id: room.quiz.id,
+          quiz_title: room.quiz.title,
+          pin: room.pin,
+          standings: finalStandings
+        });
+      } catch (err) {
+        console.error('Failed to save game result:', err);
+      }
+
       io.to(pin).emit('game_ended', finalStandings);
     }
   });

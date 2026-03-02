@@ -37,7 +37,8 @@ interface GameState {
   setCurrentQuestion: (question: any | null) => void;
   setScore: (score: number) => void;
   setStreak: (streak: number) => void;
-  addQuiz: (quiz: Quiz) => void;
+  addQuiz: (quiz: Quiz) => Promise<void>;
+  fetchQuizzes: () => Promise<void>;
   setSelectedQuiz: (quiz: Quiz | null) => void;
 }
 
@@ -62,6 +63,26 @@ export const useGameStore = create<GameState>((set) => ({
   setCurrentQuestion: (currentQuestion) => set({ currentQuestion }),
   setScore: (score) => set({ score }),
   setStreak: (streak) => set({ streak }),
-  addQuiz: (quiz) => set((state) => ({ quizzes: [...state.quizzes, quiz] })),
+  addQuiz: async (quiz) => {
+    try {
+      await fetch('/api/quizzes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(quiz),
+      });
+      set((state) => ({ quizzes: [...state.quizzes, quiz] }));
+    } catch (err) {
+      console.error('Failed to save quiz:', err);
+    }
+  },
+  fetchQuizzes: async () => {
+    try {
+      const res = await fetch('/api/quizzes');
+      const quizzes = await res.json();
+      set({ quizzes });
+    } catch (err) {
+      console.error('Failed to fetch quizzes:', err);
+    }
+  },
   setSelectedQuiz: (selectedQuiz) => set({ selectedQuiz }),
 }));

@@ -14,7 +14,7 @@ export default function Home() {
   const { socket, isConnected } = useSocket();
   const { 
     setPin, setNickname, setAvatar, setIsHost, setGameState, 
-    quizzes, addQuiz, selectedQuiz, setSelectedQuiz 
+    quizzes, addQuiz, fetchQuizzes, selectedQuiz, setSelectedQuiz 
   } = useGameStore();
   
   const [inputPin, setInputPin] = useState('');
@@ -25,7 +25,14 @@ export default function Home() {
   const [isMuted, setIsMuted] = useState(false);
 
   useEffect(() => {
-    // Initialize with sample quiz if no quizzes exist
+    const init = async () => {
+      await fetchQuizzes();
+    };
+    init();
+  }, [fetchQuizzes]);
+
+  useEffect(() => {
+    // Initialize with sample quiz if no quizzes exist after fetching
     if (quizzes.length === 0) {
       addQuiz(sampleQuiz);
     }
