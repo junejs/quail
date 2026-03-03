@@ -30,6 +30,8 @@ interface GameState {
   quizzes: Quiz[];
   gameResults: any[];
   selectedQuiz: Quiz | null;
+  isAuthenticated: boolean;
+  ldapEnabled: boolean;
   setPin: (pin: string | null) => void;
   setNickname: (nickname: string | null) => void;
   setAvatar: (avatar: string | null) => void;
@@ -44,6 +46,8 @@ interface GameState {
   fetchQuizzes: () => Promise<void>;
   fetchResults: () => Promise<void>;
   setSelectedQuiz: (quiz: Quiz | null) => void;
+  checkAuth: () => Promise<boolean>;
+  logout: () => Promise<void>;
   resetGame: () => void;
   hydrate: () => void;
 }
@@ -62,6 +66,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   quizzes: [],
   gameResults: [],
   selectedQuiz: null,
+  isAuthenticated: false,
+  ldapEnabled: false,
   setPin: (pin) => {
     set({ pin });
     if (typeof window !== 'undefined') localStorage.setItem('quail_pin', pin || '');
@@ -118,6 +124,25 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
   setSelectedQuiz: (selectedQuiz) => set({ selectedQuiz }),
+  checkAuth: async () => {
+    try {
+      const res = await fetch('/api/auth/status');
+      const data = await res.json();
+      set({ isAuthenticated: data.authenticated, ldapEnabled: data.ldapEnabled });
+      return data.authenticated;
+    } catch (err) {
+      console.error('Failed to check auth:', err);
+      return false;
+    }
+  },
+  logout: async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      set({ isAuthenticated: false });
+    } catch (err) {
+      console.error('Failed to logout:', err);
+    }
+  },
   resetGame: () => {
     set({
       pin: null,

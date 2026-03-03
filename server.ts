@@ -3,6 +3,9 @@ import { parse } from 'url';
 import next from 'next';
 import { Server } from 'socket.io';
 import { getDb, saveQuiz, getAllQuizzes, saveGameResult, getGameResults } from './lib/db';
+import jwt from 'jsonwebtoken';
+import { serialize, parse as parseCookie } from 'cookie';
+import { authenticateLDAP } from './lib/ldap';
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = '0.0.0.0';
@@ -55,6 +58,9 @@ interface Room {
 
 const rooms: Record<string, Room> = {};
 
+const JWT_SECRET = process.env.JWT_SECRET || 'quail-secret-key';
+const LDAP_ENABLED = process.env.NEXT_PUBLIC_LDAP_ENABLED === 'true';
+
 function generatePin() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
@@ -98,6 +104,76 @@ const server = createServer(async (req, res) => {
       const results = await getGameResults();
       res.setHeader('Content-Type', 'application/json');
       res.end(JSON.stringify(results));
+      return;
+    }
+
+    // Auth Routes
+    if (pathname === '/api/auth/status' && req.method === 'GET') {
+      if (!LDAP_ENABLED) {
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ authenticated: true, ldapEnabled: false }));
+        return;
+      }
+
+      const cookies = parseCookie(req.headers.cookie || '');
+      const token = cookies.auth_token;
+
+      if (!token) {
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ authenticated: false, ldapEnabled: true }));
+        return;
+      }
+
+      try {
+        jwt.verify(token, JWT_SECRET);
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ authenticated: true, ldapEnabled: true }));
+      } catch (e) {
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ authenticated: false, ldapEnabled: true }));
+      }
+      return;
+    }
+
+    if (pathname === '/api/auth/login' && req.method === 'POST') {
+      let body = '';
+      req.on('data', chunk => { body += chunk; });
+      req.on('end', async () => {
+        try {
+          const { username, password } = JSON.parse(body);
+          const isAuthenticated = await authenticateLDAP(username, password);
+
+          if (isAuthenticated) {
+            const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '24h' });
+            res.setHeader('Set-Cookie', serialize('auth_token', token, {
+              path: '/',
+              httpOnly: true,
+              secure: process.env.NODE_ENV === 'production',
+              sameSite: 'strict',
+              maxAge: 60 * 60 * 24 // 24 hours
+            }));
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ success: true }));
+          } else {
+            res.statusCode = 401;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: 'Invalid credentials' }));
+          }
+        } catch (e) {
+          res.statusCode = 400;
+          res.end(JSON.stringify({ error: 'Invalid request' }));
+        }
+      });
+      return;
+    }
+
+    if (pathname === '/api/auth/logout' && req.method === 'POST') {
+      res.setHeader('Set-Cookie', serialize('auth_token', '', {
+        path: '/',
+        maxAge: -1
+      }));
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ success: true }));
       return;
     }
 
@@ -289,7 +365,7 @@ io.on('connection', (socket) => {
           isCorrect: p.lastAnswerCorrect, 
           score: p.score, 
           streak: p.streak,
-          pointsEarned: p.lastAnswerCorrect ? p.score - (p.score - (p.lastPointsEarned || 0)) : 0, // This is a bit complex to track perfectly without more state
+          pointsEarned: p.lastPointsEarned || 0,
           lastPointsEarned: p.lastPointsEarned || 0
         });
       });
@@ -321,11 +397,20 @@ io.on('connection', (socket) => {
     player.hasAnswered = true;
     player.totalResponseTime += timeTaken;
     
-    const submittedIndex = Array.isArray(answerIndexes) ? answerIndexes[0] : answerIndexes;
-    room.answers[socket.id] = submittedIndex;
-
     // Server-side correctness check
-    const isCorrect = currentQuestion.options[submittedIndex]?.isCorrect;
+    let isCorrect = false;
+    if (currentQuestion.type === 'multiple') {
+      const submittedIndices = Array.isArray(answerIndexes) ? answerIndexes : [answerIndexes];
+      const correctIndices = currentQuestion.correctAnswerIndexes || [];
+      isCorrect = submittedIndices.length === correctIndices.length && 
+                  submittedIndices.every((idx: number) => correctIndices.includes(idx));
+      room.answers[socket.id] = submittedIndices[0]; // For host display, just use the first one
+    } else {
+      const submittedIndex = Array.isArray(answerIndexes) ? answerIndexes[0] : answerIndexes;
+      const correctIndices = currentQuestion.correctAnswerIndexes || [];
+      isCorrect = correctIndices.includes(submittedIndex);
+      room.answers[socket.id] = submittedIndex;
+    }
 
     if (isCorrect) {
       player.lastAnswerCorrect = true;

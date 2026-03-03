@@ -6,7 +6,7 @@ import { motion } from 'motion/react';
 import { useSocket } from '@/components/socket-provider';
 import { useGameStore } from '@/lib/store';
 import { sampleQuiz } from '@/lib/quiz-data';
-import { PlusCircle, Play, Settings, Volume2, VolumeX, History } from 'lucide-react';
+import { PlusCircle, Play, Settings, Volume2, VolumeX, History, LogOut } from 'lucide-react';
 import { audioManager } from '@/lib/audio-manager';
 
 function HomeContent() {
@@ -16,7 +16,8 @@ function HomeContent() {
   const { 
     setPin, setNickname, setAvatar, setIsHost, setGameState, 
     quizzes, addQuiz, fetchQuizzes, selectedQuiz, setSelectedQuiz,
-    sessionId, setSessionId, setPlayers
+    sessionId, setSessionId, setPlayers,
+    isAuthenticated, ldapEnabled, logout, checkAuth
   } = useGameStore();
   
   const [inputPin, setInputPin] = useState(searchParams.get('pin') || '');
@@ -44,9 +45,10 @@ function HomeContent() {
   useEffect(() => {
     const init = async () => {
       await fetchQuizzes();
+      await checkAuth();
     };
     init();
-  }, [fetchQuizzes]);
+  }, [fetchQuizzes, checkAuth]);
 
   useEffect(() => {
     // Initialize with sample quiz if no quizzes exist after fetching
@@ -159,7 +161,17 @@ function HomeContent() {
         <Play size={140} />
       </motion.div>
 
-      <div className="absolute top-4 right-4 z-50">
+      <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
+        {ldapEnabled && isAuthenticated && (
+          <button 
+            onClick={() => logout()}
+            className="p-3 rounded-full bg-rose-500/10 backdrop-blur-md border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 transition-all flex items-center gap-2 px-4"
+            title="Logout"
+          >
+            <LogOut size={20} />
+            <span className="text-xs font-black uppercase tracking-widest">Logout</span>
+          </button>
+        )}
         <button 
           onClick={toggleMute}
           className="p-3 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 transition-all"
