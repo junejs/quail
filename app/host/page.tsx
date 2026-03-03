@@ -25,6 +25,7 @@ export default function HostPage() {
   const [answerCounts, setAnswerCounts] = useState<Record<number, number>>({});
   const [isMuted, setIsMuted] = useState(false);
   const [showQR, setShowQR] = useState(false);
+  const [showChart, setShowChart] = useState(false);
 
   const joinUrl = typeof window !== 'undefined' && pin ? `${window.location.origin}/?pin=${pin}` : '';
 
@@ -491,7 +492,7 @@ export default function HostPage() {
             >
               <h1 className="text-6xl font-black text-white mb-24 absolute top-16 uppercase tracking-tighter drop-shadow-2xl">Podium</h1>
               
-              <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-12 items-end px-12">
+              <div className={`w-full max-w-6xl grid ${showChart ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'} gap-12 items-end px-12 transition-all duration-500`}>
                 <div className="flex items-end gap-8 h-[30rem] justify-center">
                   {/* 2nd Place */}
                   {podium[1] && (
@@ -567,79 +568,95 @@ export default function HostPage() {
                 </div>
 
                 {/* Performance Chart */}
-                <motion.div 
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 1.8 }}
-                  className="bg-white/5 backdrop-blur-xl p-8 rounded-[3rem] border border-white/10 shadow-2xl h-[30rem] flex flex-col"
-                >
-                  <h3 className="text-xl font-black text-white/40 uppercase tracking-[0.3em] mb-6">Performance over time</h3>
-                  <div className="flex-1 min-h-0">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart
-                        data={Array.from({ length: (podium[0]?.scoreHistory?.length || 0) }, (_, i) => {
-                          const point: any = { name: `Q${i}` };
-                          podium.slice(0, 5).forEach(p => {
-                            point[p.nickname] = p.scoreHistory[i];
-                          });
-                          return point;
-                        })}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                        <XAxis 
-                          dataKey="name" 
-                          stroke="rgba(255,255,255,0.3)" 
-                          fontSize={12} 
-                          tickLine={false} 
-                          axisLine={false}
-                        />
-                        <YAxis 
-                          stroke="rgba(255,255,255,0.3)" 
-                          fontSize={12} 
-                          tickLine={false} 
-                          axisLine={false}
-                          tickFormatter={(val) => `${val}`}
-                        />
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: 'rgba(10, 5, 2, 0.8)', 
-                            borderRadius: '1rem', 
-                            border: '1px solid rgba(255,255,255,0.1)',
-                            backdropFilter: 'blur(10px)',
-                            color: '#fff'
-                          }}
-                          itemStyle={{ color: '#fff' }}
-                        />
-                        <Legend iconType="circle" />
-                        {podium.slice(0, 5).map((p, idx) => (
-                          <Line 
-                            key={p.id}
-                            type="monotone" 
-                            dataKey={p.nickname} 
-                            stroke={idx === 0 ? '#fbbf24' : idx === 1 ? '#818cf8' : idx === 2 ? '#a5b4fc' : '#6366f1'} 
-                            strokeWidth={idx === 0 ? 4 : 2}
-                            dot={{ r: 4, fill: '#fff', strokeWidth: 2 }}
-                            activeDot={{ r: 8, strokeWidth: 0 }}
-                            animationDuration={2000}
-                          />
-                        ))}
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </motion.div>
+                <AnimatePresence>
+                  {showChart && (
+                    <motion.div 
+                      initial={{ opacity: 0, x: 50, scale: 0.9 }}
+                      animate={{ opacity: 1, x: 0, scale: 1 }}
+                      exit={{ opacity: 0, x: 50, scale: 0.9 }}
+                      transition={{ duration: 0.5 }}
+                      className="bg-white/5 backdrop-blur-xl p-8 rounded-[3rem] border border-white/10 shadow-2xl h-[30rem] flex flex-col"
+                    >
+                      <h3 className="text-xl font-black text-white/40 uppercase tracking-[0.3em] mb-6">Performance over time</h3>
+                      <div className="flex-1 min-h-0">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart
+                            data={Array.from({ length: (podium[0]?.scoreHistory?.length || 0) }, (_, i) => {
+                              const point: any = { name: `Q${i}` };
+                              podium.slice(0, 5).forEach(p => {
+                                point[p.nickname] = p.scoreHistory[i];
+                              });
+                              return point;
+                            })}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                            <XAxis 
+                              dataKey="name" 
+                              stroke="rgba(255,255,255,0.3)" 
+                              fontSize={12} 
+                              tickLine={false} 
+                              axisLine={false}
+                            />
+                            <YAxis 
+                              stroke="rgba(255,255,255,0.3)" 
+                              fontSize={12} 
+                              tickLine={false} 
+                              axisLine={false}
+                              tickFormatter={(val) => `${val}`}
+                            />
+                            <Tooltip 
+                              contentStyle={{ 
+                                backgroundColor: 'rgba(10, 5, 2, 0.8)', 
+                                borderRadius: '1rem', 
+                                border: '1px solid rgba(255,255,255,0.1)',
+                                backdropFilter: 'blur(10px)',
+                                color: '#fff'
+                              }}
+                              itemStyle={{ color: '#fff' }}
+                            />
+                            <Legend iconType="circle" />
+                            {podium.slice(0, 5).map((p, idx) => (
+                              <Line 
+                                key={p.id}
+                                type="monotone" 
+                                dataKey={p.nickname} 
+                                stroke={idx === 0 ? '#fbbf24' : idx === 1 ? '#818cf8' : idx === 2 ? '#a5b4fc' : '#6366f1'} 
+                                strokeWidth={idx === 0 ? 4 : 2}
+                                dot={{ r: 4, fill: '#fff', strokeWidth: 2 }}
+                                activeDot={{ r: 8, strokeWidth: 0 }}
+                                animationDuration={2000}
+                              />
+                            ))}
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
               
-              <motion.button 
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => {
-                  resetGame();
-                  router.push('/');
-                }}
-                className="mt-32 bg-white/10 backdrop-blur-md border border-white/20 text-white px-12 py-5 rounded-2xl font-black text-xl hover:bg-white/20 transition-all uppercase tracking-[0.3em]"
-              >
-                Back to Home
-              </motion.button>
+              <div className="flex gap-6 mt-32">
+                <motion.button 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowChart(!showChart)}
+                  className={`bg-white/10 backdrop-blur-md border border-white/20 text-white px-12 py-5 rounded-2xl font-black text-xl transition-all uppercase tracking-[0.2em] ${showChart ? 'bg-indigo-600/40 border-indigo-500/50' : 'hover:bg-white/20'}`}
+                >
+                  {showChart ? 'Hide Stats' : 'Show Stats'}
+                </motion.button>
+
+                <motion.button 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    resetGame();
+                    router.push('/');
+                  }}
+                  className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-12 py-5 rounded-2xl font-black text-xl hover:bg-white/20 transition-all uppercase tracking-[0.2em]"
+                >
+                  Back to Home
+                </motion.button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
