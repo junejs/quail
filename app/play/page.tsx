@@ -93,6 +93,7 @@ export default function PlayPage() {
   const handleAnswer = (indexes: number[]) => {
     if (hasAnswered || !socket || !selectedQuiz || indexes.length === 0) return;
     
+    audioManager?.unlock();
     setHasAnswered(true);
     
     socket.emit('submit_answer', {
