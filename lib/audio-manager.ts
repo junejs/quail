@@ -121,15 +121,23 @@ class AudioManager {
     }
   }
 
-  stopBgm() {
+  stopBgm(keepCurrent: boolean = false) {
     if (this.currentBgm) {
       const sound = this.sounds.get(this.currentBgm);
       if (sound) {
-        sound.fade(sound.volume(), 0, 1000);
-        setTimeout(() => {
+        if (keepCurrent) {
+          // Just mute, don't clear currentBgm
           sound.stop();
-          this.currentBgm = null;
-        }, 1000);
+        } else {
+          sound.fade(sound.volume(), 0, 1000);
+          setTimeout(() => {
+            sound.stop();
+            this.currentBgm = null;
+          }, 1000);
+        }
+      }
+      if (!keepCurrent) {
+        this.currentBgm = null;
       }
     }
   }
@@ -148,10 +156,19 @@ class AudioManager {
   }
 
   setMute(mute: boolean) {
+    const wasMuted = this.isMuted;
     this.isMuted = mute;
     this.sounds.forEach(sound => sound.mute(mute));
+
     if (mute) {
-      this.stopBgm();
+      // Mute: stop BGM but keep currentBgm reference for resume
+      this.stopBgm(true);
+    } else if (wasMuted && this.currentBgm) {
+      // Unmute: resume BGM if there was one playing
+      const sound = this.sounds.get(this.currentBgm);
+      if (sound) {
+        sound.play();
+      }
     }
   }
 
