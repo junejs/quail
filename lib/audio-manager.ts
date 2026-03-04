@@ -18,6 +18,11 @@ class AudioManager {
 
   constructor() {
     if (typeof window !== 'undefined') {
+      // Ensure Howler creates the audio context
+      if (!Howler.ctx) {
+        Howler.volume(0.8);
+      }
+
       // Global click listener to unlock audio context
       const unlock = () => {
         if (this.isUnlocked) return;
@@ -36,7 +41,7 @@ class AudioManager {
         const isBgm = key === 'lobby' || key === 'question' || key === 'podium';
         this.sounds.set(key, new Howl({
           src: [url],
-          html5: isBgm, // Use HTML5 for BGM (large files), Web Audio for SFX
+          html5: false, // Use Web Audio API for all sounds (better autoplay support)
           loop: isBgm,
           volume: 0.8,
           preload: true,
@@ -54,13 +59,13 @@ class AudioManager {
             } else {
               console.error(`Failed to play audio: ${key}`, error);
             }
-            
+
             // Try to resume context and play again if possible
-            if (Howler.ctx && Howler.ctx.state === 'suspended') {
-              Howler.ctx.resume().then(() => {
+            this.resumeContext().then(() => {
+              if (this.sounds.get(key) && !this.sounds.get(key)?.playing()) {
                 this.sounds.get(key)?.play();
-              }).catch(() => {});
-            }
+              }
+            }).catch(() => {});
           }
         }));
       });
@@ -78,29 +83,37 @@ class AudioManager {
   }
 
   private async resumeContext() {
-    if (typeof window !== 'undefined' && Howler.ctx && Howler.ctx.state === 'suspended') {
-      try {
-        await Howler.ctx.resume();
-        console.log('Audio context resumed');
-      } catch (e) {
-        console.error('Failed to resume audio context', e);
+    if (typeof window !== 'undefined') {
+      // Ensure Howler has a context
+      if (!Howler.ctx) {
+        Howler.volume(0.8);
+      }
+      if (Howler.ctx && (Howler.ctx.state === 'suspended' || Howler.ctx.state === 'closed')) {
+        try {
+          await Howler.ctx.resume();
+          console.log('Audio context resumed');
+        } catch (e) {
+          console.error('Failed to resume audio context', e);
+        }
       }
     }
   }
 
   async playBgm(key: keyof typeof AUDIO_ASSETS) {
-    console.log(`Attempting to play BGM: ${key}`);
+    console.log(`Attempting to play BGM: ${key}, isUnlocked: ${this.isUnlocked}`);
     if (this.isMuted) return;
     if (this.currentBgm === key) return;
 
-    // If context is suspended or not unlocked, queue it instead of failing
-    if (typeof window !== 'undefined' && (!this.isUnlocked || (Howler.ctx && Howler.ctx.state === 'suspended'))) {
-      console.warn(`Audio context not unlocked or suspended, queueing BGM: ${key}`);
+    // Always try to resume the context first
+    await this.resumeContext();
+
+    // After attempting resume, check if context is ready
+    const ctxState = Howler.ctx?.state;
+    if (ctxState === 'suspended' || ctxState === 'closed') {
+      console.warn(`Audio context still suspended (state: ${ctxState}), queueing BGM: ${key}`);
       this.queuedBgm = key;
       return;
     }
-
-    await this.resumeContext();
 
     if (this.currentBgm) {
       const prevBgm = this.sounds.get(this.currentBgm);
