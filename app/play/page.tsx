@@ -1,22 +1,25 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSocket } from '@/components/socket-provider';
 import { useGameStore } from '@/lib/store';
 import { audioManager } from '@/lib/audio-manager';
+import { AVATARS } from '@/lib/constants';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function PlayPage() {
   const router = useRouter();
   const { socket } = useSocket();
-  const { pin, nickname, avatar, isHost, gameState, setGameState, score, setScore, streak, setStreak, selectedQuiz, resetGame } = useGameStore();
+  const { pin, nickname, avatar, setAvatar, isHost, gameState, setGameState, score, setScore, streak, setStreak, selectedQuiz, resetGame } = useGameStore();
 
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(-1);
   const [hasAnswered, setHasAnswered] = useState(false);
-  const [answerResult, setAnswerResult] = useState<{ 
-    isCorrect: boolean, 
-    score: number, 
+  const [answerResult, setAnswerResult] = useState<{
+    isCorrect: boolean,
+    score: number,
     streak: number,
     pointsEarned?: number,
     lastPointsEarned?: number
@@ -41,6 +44,15 @@ export default function PlayPage() {
   }, []);
 
   useEffect(() => {
+    if (gameState === 'lobby' && scrollRef.current && avatar) {
+      const activeItem = scrollRef.current.querySelector(`[data-avatar="${avatar}"]`) as HTMLElement;
+      if (activeItem) {
+        scrollRef.current.scrollLeft = activeItem.offsetLeft - scrollRef.current.offsetWidth / 2 + activeItem.offsetWidth / 2;
+      }
+    }
+  }, [gameState]);
+
+  useEffect(() => {
     if (isHost || !pin || !nickname || !socket || !selectedQuiz) {
       router.push('/');
       return;
@@ -58,7 +70,7 @@ export default function PlayPage() {
       setAnswerResult(result);
       setScore(result.score);
       setStreak(result.streak);
-      
+
       if (result.isCorrect) {
         audioManager?.playSfx('correct');
       } else {
@@ -91,7 +103,7 @@ export default function PlayPage() {
 
   const toggleSelection = (index: number) => {
     if (hasAnswered) return;
-    
+
     const question = selectedQuiz!.questions[currentQuestionIndex];
     if (question.type === 'multiple') {
       if (selectedIndexes.includes(index)) {
@@ -106,14 +118,31 @@ export default function PlayPage() {
 
   const handleAnswer = (indexes: number[]) => {
     if (hasAnswered || !socket || !selectedQuiz || indexes.length === 0) return;
-    
+
     audioManager?.unlock();
     setHasAnswered(true);
-    
+
     socket.emit('submit_answer', {
       pin,
       answerIndexes: indexes
     });
+  };
+
+  const handleAvatarChange = (newAvatar: string) => {
+    if (!socket || !pin) return;
+    setAvatar(newAvatar);
+    socket.emit('change_avatar', { pin, avatar: newAvatar });
+
+    // Scroll to center the newly selected avatar
+    if (scrollRef.current) {
+      const activeItem = scrollRef.current.querySelector(`[data-avatar="${newAvatar}"]`) as HTMLElement;
+      if (activeItem) {
+        scrollRef.current.scrollTo({
+          left: activeItem.offsetLeft - scrollRef.current.offsetWidth / 2 + activeItem.offsetWidth / 2,
+          behavior: 'smooth'
+        });
+      }
+    }
   };
 
   if (isHost || !selectedQuiz) return null;
@@ -122,38 +151,59 @@ export default function PlayPage() {
     <div className="min-h-screen flex flex-col font-sans relative overflow-hidden">
       <AnimatePresence mode="wait">
         {gameState === 'lobby' && (
-          <motion.div 
+          <motion.div
             key="lobby"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.1 }}
             className="flex-1 flex flex-col items-center justify-center p-8 text-center"
           >
-            <motion.div 
+            <motion.div
               animate={{ y: [0, -10, 0] }}
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              className="bg-white/10 backdrop-blur-xl p-12 rounded-[3rem] border border-white/20 shadow-2xl"
+              className="bg-white/10 backdrop-blur-xl p-12 rounded-[3rem] border border-white/20 shadow-2xl w-full max-w-lg"
             >
               <h1 className="text-5xl font-black text-white mb-4 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">You&apos;re in!</h1>
-              <p className="text-xl font-bold text-white/50 uppercase tracking-widest">See your nickname on screen</p>
-              <div className="mt-12 flex flex-col items-center gap-6">
-                <motion.div 
-                  animate={{ scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className="text-9xl"
+              <p className="text-xl font-bold text-white/50 uppercase tracking-widest mb-12">Pick your character</p>
+
+              <div className="relative group mb-12">
+                <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-[#1e1b4b] to-transparent z-10 pointer-events-none" />
+                <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-[#1e1b4b] to-transparent z-10 pointer-events-none" />
+
+                <div className="flex overflow-x-auto gap-6 px-32 py-4 no-scrollbar snap-x snap-mandatory scroll-smooth"
+                  ref={scrollRef}
                 >
-                  {avatar}
-                </motion.div>
-                <div className="text-4xl font-black text-indigo-400 bg-white/5 border border-white/10 px-10 py-5 rounded-3xl shadow-xl">
-                  {nickname}
+                  {AVATARS.map((a) => (
+                    <motion.button
+                      key={a}
+                      data-avatar={a}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => handleAvatarChange(a)}
+                      className={`text-8xl flex-shrink-0 snap-center transition-all duration-300 ${avatar === a ? 'scale-125 drop-shadow-[0_0_20px_rgba(255,255,255,0.4)]' : 'opacity-20 grayscale scale-90 hover:opacity-50'}`}
+                    >
+                      {a}
+                    </motion.button>
+                  ))}
                 </div>
+
+                <div className="absolute -left-4 top-1/2 -translate-y-1/2 text-white/20 animate-pulse">
+                  <ChevronLeft size={40} />
+                </div>
+                <div className="absolute -right-4 top-1/2 -translate-y-1/2 text-white/20 animate-pulse">
+                  <ChevronRight size={40} />
+                </div>
+              </div>
+
+              <div className="text-4xl font-black text-indigo-400 bg-white/5 border border-white/10 px-10 py-5 rounded-3xl shadow-xl inline-block">
+                {nickname}
               </div>
             </motion.div>
           </motion.div>
         )}
 
         {gameState === 'question' && !hasAnswered && currentQuestionIndex >= 0 && selectedQuiz && (
-          <motion.div 
+          <motion.div
             key="question"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -177,7 +227,7 @@ export default function PlayPage() {
                       {opt.shape === 'square' && <div className="w-24 h-24 bg-white shadow-lg" />}
                     </div>
                     {selectedQuiz.questions[currentQuestionIndex].type === 'multiple' && selectedIndexes.includes(i) && (
-                      <motion.div 
+                      <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         className="absolute top-6 right-6 bg-white text-indigo-600 rounded-full p-2 shadow-xl"
@@ -208,7 +258,7 @@ export default function PlayPage() {
         )}
 
         {gameState === 'question' && hasAnswered && !answerResult && (
-          <motion.div 
+          <motion.div
             key="waiting"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -227,7 +277,7 @@ export default function PlayPage() {
         )}
 
         {gameState === 'question' && hasAnswered && answerResult && (
-          <motion.div 
+          <motion.div
             key="result"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -241,36 +291,36 @@ export default function PlayPage() {
               </div>
             )}
             {!answerResult.isCorrect && (
-              <motion.div 
+              <motion.div
                 animate={{ x: [-10, 10, -10, 10, 0] }}
                 transition={{ duration: 0.4 }}
                 className="absolute inset-0 pointer-events-none bg-black/20"
               />
             )}
 
-            <motion.h1 
+            <motion.h1
               initial={{ y: -20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               className="text-7xl font-black mb-6 drop-shadow-2xl"
             >
               {answerResult.isCorrect ? 'CORRECT!' : 'INCORRECT'}
             </motion.h1>
-            
-            <motion.div 
+
+            <motion.div
               animate={{ rotate: answerResult.isCorrect ? [0, 10, -10, 0] : [0, -5, 5, 0] }}
               transition={{ duration: 0.5 }}
               className="text-9xl mb-10 drop-shadow-2xl"
             >
               {avatar}
             </motion.div>
-            
+
             <div className="bg-black/30 backdrop-blur-md border border-white/10 px-10 py-6 rounded-[2.5rem] mb-6 w-full max-w-xs shadow-2xl">
               <p className="text-xs font-black uppercase tracking-[0.3em] opacity-50 mb-2">Total Score</p>
               <p className="text-6xl font-black">{answerResult.score}</p>
             </div>
 
             {answerResult.isCorrect && answerResult.lastPointsEarned !== undefined && (
-              <motion.div 
+              <motion.div
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.3 }}
@@ -280,7 +330,7 @@ export default function PlayPage() {
                   +{answerResult.lastPointsEarned}
                 </div>
                 {answerResult.streak >= 2 && (
-                  <motion.div 
+                  <motion.div
                     animate={{ scale: [1, 1.1, 1] }}
                     transition={{ duration: 1, repeat: Infinity }}
                     className="bg-orange-500 text-white px-8 py-3 rounded-full font-black text-xl shadow-[0_0_20px_rgba(249,115,22,0.5)] flex items-center justify-center gap-3"
@@ -300,7 +350,7 @@ export default function PlayPage() {
         )}
 
         {gameState === 'leaderboard' && (
-          <motion.div 
+          <motion.div
             key="leaderboard-wait"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -322,7 +372,7 @@ export default function PlayPage() {
         )}
 
         {gameState === 'podium' && (
-          <motion.div 
+          <motion.div
             key="podium-result"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -331,10 +381,10 @@ export default function PlayPage() {
             <div className="bg-white/10 backdrop-blur-xl p-12 rounded-[3.5rem] border border-white/20 shadow-2xl w-full max-w-md relative overflow-hidden">
               {/* Decorative inner glow */}
               <div className="absolute -top-24 -left-24 w-48 h-48 bg-indigo-500/30 blur-3xl rounded-full pointer-events-none" />
-              
+
               <h1 className="text-5xl font-black text-white mb-4 uppercase tracking-tighter">Game Over!</h1>
-              
-              <motion.div 
+
+              <motion.div
                 animate={{ rotate: [0, 5, -5, 0] }}
                 transition={{ duration: 4, repeat: Infinity }}
                 className="text-9xl mb-8 drop-shadow-2xl"
@@ -357,7 +407,7 @@ export default function PlayPage() {
                 <p className="text-5xl font-black text-white">{score}</p>
               </div>
 
-              <motion.button 
+              <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => {

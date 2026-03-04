@@ -6,6 +6,7 @@ import { getDb, saveQuiz, getAllQuizzes, saveGameResult, getGameResults } from '
 import jwt from 'jsonwebtoken';
 import { serialize, parse as parseCookie } from 'cookie';
 import { authenticateLDAP } from './lib/ldap';
+import { AVATARS } from './lib/constants';
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = '0.0.0.0';
@@ -37,8 +38,6 @@ interface Player {
   lastStreakBonus?: number;
   isDisconnected: boolean;
 }
-
-const AVATARS = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🦆', '🦅', '🦉', '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🐛', '🦋', '🐌', '🐞', '🐜', '🦟', '🦗', '🕷', '🦂', '🐢', '🐍', '🦎', '🦖', '🦕', '🐙', '🦑', '🦐', '🦞', '🦀', '🐡', '🐠', '🐟', '🐬', '🐳', '🐋', '🦈', '🐊', '🐅', '🐆', '🦓', '🦍', '🦧', '🐘', '🦛', '🦏', '🐪', '🐫', '🦒', '🦘', '🐃', '🐂', '🐄', '🐎', '🐖', '🐏', '🐑', '🐐', '🦌', '🐕', '🐩', '🐈', '🐓', '🦃', '🦚', '🦜', '🦢', '🦩', '🕊', '🐇', '🦝', '🦨', '🦡', '🦦', '🦥', '🐁', '🐀', '🐿', '🦔'];
 
 function getRandomAvatar() {
   return AVATARS[Math.floor(Math.random() * AVATARS.length)];
@@ -263,6 +262,15 @@ io.on('connection', (socket) => {
     
     // Notify host
     io.to(room.hostId).emit('player_joined', Object.values(room.players));
+  });
+
+  socket.on('change_avatar', ({ pin, avatar }) => {
+    const room = rooms[pin];
+    if (room && room.players[socket.id]) {
+      room.players[socket.id].avatar = avatar;
+      // Notify host to update the player list
+      io.to(room.hostId).emit('player_joined', Object.values(room.players));
+    }
   });
 
   // Player rejoins a room (after refresh)
