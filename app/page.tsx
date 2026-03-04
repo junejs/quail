@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useSocket } from '@/components/socket-provider';
 import { useGameStore } from '@/lib/store';
 import { sampleQuiz } from '@/lib/quiz-data';
@@ -26,6 +26,20 @@ function HomeContent() {
   const [isJoining, setIsJoining] = useState(false);
   const [showHostOptions, setShowHostOptions] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [isAudioBlocked, setIsAudioBlocked] = useState(false);
+
+  useEffect(() => {
+    const checkAudio = () => {
+      if (audioManager && !audioManager.getIsUnlocked()) {
+        setIsAudioBlocked(true);
+      } else {
+        setIsAudioBlocked(false);
+      }
+    };
+    checkAudio();
+    window.addEventListener('click', checkAudio);
+    return () => window.removeEventListener('click', checkAudio);
+  }, []);
 
   useEffect(() => {
     const pinFromUrl = searchParams.get('pin');
@@ -56,6 +70,11 @@ function HomeContent() {
       addQuiz(sampleQuiz);
     }
   }, [quizzes.length, addQuiz]);
+
+  useEffect(() => {
+    // Start lobby music on home page if possible
+    audioManager?.playBgm('lobby');
+  }, []);
 
   useEffect(() => {
     if (!socket) return;
@@ -342,6 +361,23 @@ function HomeContent() {
           )}
         </div>
       </motion.div>
+
+      {/* Audio Blocked Indicator */}
+      <AnimatePresence>
+        {isAudioBlocked && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed bottom-12 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
+          >
+            <div className="bg-indigo-600/80 backdrop-blur-xl border border-white/20 px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3">
+              <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
+              <span className="text-white font-black text-xs uppercase tracking-widest">Click anywhere to enable sound</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Footer info */}
       <div className="absolute bottom-6 text-white/10 text-[10px] font-black uppercase tracking-[0.5em] select-none">

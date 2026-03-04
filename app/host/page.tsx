@@ -33,7 +33,21 @@ export default function HostPage() {
   const [podium, setPodium] = useState<any[]>([]);
   const [answerCounts, setAnswerCounts] = useState<Record<number, number>>({});
   const [isMuted, setIsMuted] = useState(false);
+  const [isAudioBlocked, setIsAudioBlocked] = useState(false);
   const [showQR, setShowQR] = useState(false);
+
+  useEffect(() => {
+    const checkAudio = () => {
+      if (audioManager && !audioManager.getIsUnlocked()) {
+        setIsAudioBlocked(true);
+      } else {
+        setIsAudioBlocked(false);
+      }
+    };
+    checkAudio();
+    window.addEventListener('click', checkAudio);
+    return () => window.removeEventListener('click', checkAudio);
+  }, []);
   const [showChart, setShowChart] = useState(false);
 
   const joinUrl = typeof window !== 'undefined' && pin ? `${window.location.origin}/?pin=${pin}` : '';
@@ -715,6 +729,23 @@ export default function HostPage() {
                 >
                   Back to Home
                 </motion.button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Audio Blocked Indicator */}
+        <AnimatePresence>
+          {isAudioBlocked && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="fixed bottom-12 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
+            >
+              <div className="bg-indigo-600/80 backdrop-blur-xl border border-white/20 px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3">
+                <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
+                <span className="text-white font-black text-xs uppercase tracking-widest">Click anywhere to enable sound</span>
               </div>
             </motion.div>
           )}
