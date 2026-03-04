@@ -136,10 +136,11 @@ export default function HostPage() {
 
     if (gameState === 'lobby') {
       audioManager?.playBgm('lobby');
-    } else if (gameState === 'question') {
-      audioManager?.playBgm('question');
     } else if (gameState === 'podium') {
       audioManager?.playBgm('podium');
+    } else if (gameState === 'question' || gameState === 'question_result' || gameState === 'leaderboard') {
+      // Play question music throughout the entire answer process (question, result, leaderboard)
+      audioManager?.playBgm('question');
     } else if (gameState !== 'idle') {
       audioManager?.stopBgm();
     }
@@ -184,7 +185,7 @@ export default function HostPage() {
     <AuthGuard>
       <div className="min-h-screen flex flex-col font-sans overflow-hidden relative">
         {/* 固定音量和音频阻止提示 */}
-        <div className="fixed top-6 right-6 z-50 flex items-center gap-3">
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3">
           {isAudioBlocked && (
             <button
               onClick={() => audioManager?.unlock()}
