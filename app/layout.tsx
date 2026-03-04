@@ -1,14 +1,14 @@
-import type {Metadata} from 'next';
+import type { Metadata } from 'next';
 import './globals.css'; // Global styles
 import { SocketProvider } from '@/components/socket-provider';
 import { AtmosphericBackground } from '@/components/AtmosphericBackground';
 
 export const metadata: Metadata = {
-  title: 'quail',
+  title: 'Quail',
   description: 'The Ultimate Quiz Experience',
 };
 
-export default function RootLayout({children}: {children: React.ReactNode}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body suppressHydrationWarning className="bg-[#0a0502] text-white">
