@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSocket } from '@/components/socket-provider';
@@ -115,11 +115,6 @@ export default function HostPage() {
     socket.on('leaderboard_updated', onLeaderboardUpdated);
     socket.on('game_ended', onGameEnded);
 
-    // Initial BGM
-    if (gameState === 'lobby') {
-      audioManager?.playBgm('lobby');
-    }
-
     return () => {
       socket.off('player_joined', onPlayerJoined);
       socket.off('player_left', onPlayerLeft);
@@ -132,14 +127,20 @@ export default function HostPage() {
     };
   }, [socket, isHost, pin, router, setPlayers, setGameState, selectedQuiz, gameState]);
 
+  const prevGameStateRef = useRef<string | null>(null);
+
   useEffect(() => {
+    // Skip if gameState hasn't actually changed
+    if (prevGameStateRef.current === gameState) return;
+    prevGameStateRef.current = gameState;
+
     if (gameState === 'lobby') {
       audioManager?.playBgm('lobby');
     } else if (gameState === 'question') {
       audioManager?.playBgm('question');
     } else if (gameState === 'podium') {
       audioManager?.playBgm('podium');
-    } else {
+    } else if (gameState !== 'idle') {
       audioManager?.stopBgm();
     }
   }, [gameState]);
@@ -153,8 +154,10 @@ export default function HostPage() {
     }
   }, [gameState, timeLeft, socket, pin]);
 
-  const handleStartGame = () => {
-    audioManager?.playSfx('join'); // Trigger to unlock audio context
+  const handleStartGame = async () => {
+    // Unlock audio context before starting game
+    await audioManager?.unlock();
+    audioManager?.playSfx('join');
     socket?.emit('start_game', pin);
   };
 
@@ -180,6 +183,24 @@ export default function HostPage() {
   return (
     <AuthGuard>
       <div className="min-h-screen flex flex-col font-sans overflow-hidden relative">
+        {/* 固定音量和音频阻止提示 */}
+        <div className="fixed top-6 right-6 z-50 flex items-center gap-3">
+          {isAudioBlocked && (
+            <button
+              onClick={() => audioManager?.unlock()}
+              className="px-4 py-2 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 text-sm font-bold animate-pulse"
+            >
+              🔓 Enable Audio
+            </button>
+          )}
+          <button
+            onClick={toggleMute}
+            className="p-4 rounded-full bg-white/10 backdrop-blur-md text-white border border-white/20 hover:bg-white/20 transition-all"
+            title={isMuted ? 'Unmute' : 'Mute'}
+          >
+            {isMuted ? <VolumeX size={24} /> : <Volume2 size={24} />}
+          </button>
+        </div>
         <AnimatePresence mode="wait">
           {gameState === 'lobby' && (
             <motion.div 
@@ -217,12 +238,6 @@ export default function HostPage() {
                       <p className="text-lg font-bold text-white/60">Quiz: <span className="text-white">{selectedQuiz.title}</span></p>
                     </div>
                   </div>
-                  <button 
-                    onClick={toggleMute}
-                    className="p-5 rounded-full bg-white/5 text-white border border-white/10 hover:bg-white/10 transition-all"
-                  >
-                    {isMuted ? <VolumeX size={32} /> : <Volume2 size={32} />}
-                  </button>
                 </div>
                 <motion.button 
                   whileHover={{ scale: 1.05 }}
@@ -513,7 +528,7 @@ export default function HostPage() {
               animate={{ opacity: 1 }}
               className="flex-1 flex flex-col items-center justify-start pt-32 pb-32 overflow-y-auto custom-scrollbar"
             >
-              <h1 className="text-6xl font-black text-white mb-32 uppercase tracking-tighter drop-shadow-2xl">Podium</h1>
+              <h1 className="text-6xl font-black text-white mb-32 uppercase tracking-tighter drop-shadow-2xl">{selectedQuiz?.title || 'Podium'}</h1>
               
               <div className={`w-full max-w-7xl flex flex-col items-center gap-16 px-12 transition-all duration-500`}>
                 <div className={`flex flex-col lg:flex-row items-center lg:items-end gap-12 w-full justify-center`}>

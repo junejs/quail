@@ -71,10 +71,6 @@ function HomeContent() {
     }
   }, [quizzes.length, addQuiz]);
 
-  useEffect(() => {
-    // Start lobby music on home page if possible
-    audioManager?.playBgm('lobby');
-  }, []);
 
   useEffect(() => {
     if (!socket) return;

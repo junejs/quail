@@ -83,53 +83,40 @@ class AudioManager {
   }
 
   private async resumeContext() {
-    if (typeof window !== 'undefined') {
-      // Ensure Howler has a context
-      if (!Howler.ctx) {
-        Howler.volume(0.8);
-      }
-      if (Howler.ctx && (Howler.ctx.state === 'suspended' || Howler.ctx.state === 'closed')) {
-        try {
-          await Howler.ctx.resume();
-          console.log('Audio context resumed');
-        } catch (e) {
-          console.error('Failed to resume audio context', e);
-        }
+    if (typeof window === 'undefined') return;
+
+    // Force create audio context on user interaction
+    if (!Howler.ctx) {
+      Howler.volume(0.8);
+      const silentSound = new Howl({ src: ['data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA='] });
+      silentSound.play();
+      silentSound.stop();
+    }
+
+    // Always try to resume
+    if (Howler.ctx && Howler.ctx.state !== 'running') {
+      try {
+        await Howler.ctx.resume();
+      } catch (e) {
+        console.error('Failed to resume audio context', e);
       }
     }
   }
 
   async playBgm(key: keyof typeof AUDIO_ASSETS) {
-    console.log(`Attempting to play BGM: ${key}, isUnlocked: ${this.isUnlocked}`);
-    if (this.isMuted) return;
-    if (this.currentBgm === key) return;
+    if (this.isMuted || this.currentBgm === key) return;
 
-    // Always try to resume the context first
-    await this.resumeContext();
-
-    // After attempting resume, check if context is ready
-    const ctxState = Howler.ctx?.state;
-    if (ctxState === 'suspended' || ctxState === 'closed') {
-      console.warn(`Audio context still suspended (state: ${ctxState}), queueing BGM: ${key}`);
-      this.queuedBgm = key;
-      return;
-    }
-
+    // Stop previous BGM immediately
     if (this.currentBgm) {
       const prevBgm = this.sounds.get(this.currentBgm);
-      if (prevBgm && prevBgm.playing()) {
-        prevBgm.fade(prevBgm.volume(), 0, 1000);
-        setTimeout(() => {
-          prevBgm.stop();
-        }, 1000);
-      }
+      if (prevBgm) prevBgm.stop();
     }
+
+    await this.resumeContext();
 
     const sound = this.sounds.get(key);
     if (sound) {
-      sound.volume(0);
       sound.play();
-      sound.fade(0, 0.5, 1000);
       this.currentBgm = key;
     }
   }
