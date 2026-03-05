@@ -2,44 +2,29 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { useSocket } from '@/components/socket-provider';
 import { useGameStore } from '@/lib/store';
 import { sampleQuiz } from '@/lib/quiz-data';
-import { PlusCircle, Play, Settings, Volume2, VolumeX, History, LogOut } from 'lucide-react';
+import { PlusCircle, Play, Settings, History, LogOut } from 'lucide-react';
 import { audioManager } from '@/lib/audio-manager';
 
 function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { socket, isConnected } = useSocket();
-  const { 
-    setPin, setNickname, setAvatar, setIsHost, setGameState, 
+  const {
+    setPin, setNickname, setAvatar, setIsHost, setGameState,
     quizzes, addQuiz, fetchQuizzes, selectedQuiz, setSelectedQuiz,
     sessionId, setSessionId, setPlayers,
     isAuthenticated, ldapEnabled, logout, checkAuth
   } = useGameStore();
-  
+
   const [inputPin, setInputPin] = useState(searchParams.get('pin') || '');
   const [inputNickname, setInputNickname] = useState('');
   const [error, setError] = useState('');
   const [isJoining, setIsJoining] = useState(false);
   const [showHostOptions, setShowHostOptions] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isAudioBlocked, setIsAudioBlocked] = useState(false);
-
-  useEffect(() => {
-    const checkAudio = () => {
-      if (audioManager && !audioManager.getIsUnlocked()) {
-        setIsAudioBlocked(true);
-      } else {
-        setIsAudioBlocked(false);
-      }
-    };
-    checkAudio();
-    window.addEventListener('click', checkAudio);
-    return () => window.removeEventListener('click', checkAudio);
-  }, []);
 
   useEffect(() => {
     const pinFromUrl = searchParams.get('pin');
@@ -140,23 +125,18 @@ function HomeContent() {
       setError('Please enter both PIN and Nickname');
       return;
     }
-    
+
     setIsJoining(true);
     setError('');
-    
-    socket.emit('join_room', { pin: inputPin, nickname: inputNickname, sessionId });
-  };
 
-  const toggleMute = () => {
-    const muted = audioManager?.toggleMute();
-    setIsMuted(!!muted);
+    socket.emit('join_room', { pin: inputPin, nickname: inputNickname, sessionId });
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 font-sans overflow-hidden relative">
       {/* Floating Elements */}
-      <motion.div 
-        animate={{ 
+      <motion.div
+        animate={{
           y: [0, -20, 0],
           rotate: [0, 5, 0]
         }}
@@ -165,8 +145,8 @@ function HomeContent() {
       >
         <PlusCircle size={120} />
       </motion.div>
-      <motion.div 
-        animate={{ 
+      <motion.div
+        animate={{
           y: [0, 20, 0],
           rotate: [0, -5, 0]
         }}
@@ -178,7 +158,7 @@ function HomeContent() {
 
       <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
         {ldapEnabled && isAuthenticated && (
-          <button 
+          <button
             onClick={() => logout()}
             className="p-3 rounded-full bg-rose-500/10 backdrop-blur-md border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 transition-all flex items-center gap-2 px-4"
             title="Logout"
@@ -187,15 +167,9 @@ function HomeContent() {
             <span className="text-xs font-black uppercase tracking-widest">Logout</span>
           </button>
         )}
-        <button 
-          onClick={toggleMute}
-          className="p-3 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 transition-all"
-        >
-          {isMuted ? <VolumeX size={24} /> : <Volume2 size={24} />}
-        </button>
       </div>
 
-      <motion.div 
+      <motion.div
         initial={{ scale: 0.9, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         className="relative z-10 w-full max-w-md"
@@ -203,8 +177,8 @@ function HomeContent() {
         <div className="bg-white/10 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white/20 shadow-2xl text-center overflow-hidden">
           {/* Decorative inner glow */}
           <div className="absolute -top-24 -left-24 w-48 h-48 bg-indigo-500/30 blur-3xl rounded-full pointer-events-none" />
-          
-          <motion.h1 
+
+          <motion.h1
             initial={{ letterSpacing: "0.2em", opacity: 0 }}
             animate={{ letterSpacing: "-0.05em", opacity: 1 }}
             transition={{ duration: 1, ease: "easeOut" }}
@@ -242,9 +216,9 @@ function HomeContent() {
                     maxLength={15}
                   />
                 </div>
-                
+
                 {error && (
-                  <motion.p 
+                  <motion.p
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="text-rose-400 font-bold text-sm"
@@ -252,7 +226,7 @@ function HomeContent() {
                     {error}
                   </motion.p>
                 )}
-                
+
                 <button
                   type="submit"
                   disabled={!isConnected || isJoining}
@@ -294,11 +268,10 @@ function HomeContent() {
                     <button
                       key={quiz.id}
                       onClick={() => setSelectedQuiz(quiz)}
-                      className={`w-full text-left p-4 rounded-2xl border transition-all flex justify-between items-center group ${
-                        selectedQuiz?.id === quiz.id 
-                          ? 'border-indigo-500 bg-indigo-500/20 text-white shadow-[0_0_15px_rgba(99,102,241,0.3)]' 
-                          : 'border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:bg-white/10'
-                      }`}
+                      className={`w-full text-left p-4 rounded-2xl border transition-all flex justify-between items-center group ${selectedQuiz?.id === quiz.id
+                        ? 'border-indigo-500 bg-indigo-500/20 text-white shadow-[0_0_15px_rgba(99,102,241,0.3)]'
+                        : 'border-white/10 bg-white/5 text-white/60 hover:border-white/20 hover:bg-white/10'
+                        }`}
                     >
                       <div className="flex flex-col">
                         <span className="font-bold text-sm group-hover:text-white transition-colors">{quiz.title}</span>
@@ -346,7 +319,7 @@ function HomeContent() {
               </button>
             </motion.div>
           )}
-          
+
           {!isConnected && (
             <div className="mt-8 pt-6 border-t border-white/5">
               <p className="text-[10px] text-white/20 flex items-center justify-center gap-2 font-black uppercase tracking-widest">
@@ -357,23 +330,6 @@ function HomeContent() {
           )}
         </div>
       </motion.div>
-
-      {/* Audio Blocked Indicator */}
-      <AnimatePresence>
-        {isAudioBlocked && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="fixed bottom-12 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
-          >
-            <div className="bg-indigo-600/80 backdrop-blur-xl border border-white/20 px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3">
-              <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
-              <span className="text-white font-black text-xs uppercase tracking-widest">Click anywhere to enable sound</span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Footer info */}
       <div className="absolute bottom-6 text-white/10 text-[10px] font-black uppercase tracking-[0.5em] select-none">
