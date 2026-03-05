@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useSocket } from '@/components/socket-provider';
 import { useGameStore } from '@/lib/store';
 import { audioManager } from '@/lib/audio-manager';
-import { AVATARS } from '@/lib/constants';
+import { AVATARS, AVATAR_GROUPS } from '@/lib/constants';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function PlayPage() {
@@ -16,6 +16,13 @@ export default function PlayPage() {
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(-1);
+  const [activeGroupId, setActiveGroupId] = useState(() => {
+    if (typeof window !== 'undefined' && avatar) {
+      const group = AVATAR_GROUPS.find(g => g.avatars.includes(avatar));
+      return group ? group.id : AVATAR_GROUPS[0].id;
+    }
+    return AVATAR_GROUPS[0].id;
+  });
   const [hasAnswered, setHasAnswered] = useState(false);
   const [answerResult, setAnswerResult] = useState<{
     isCorrect: boolean,
@@ -50,7 +57,7 @@ export default function PlayPage() {
         scrollRef.current.scrollLeft = activeItem.offsetLeft - scrollRef.current.offsetWidth / 2 + activeItem.offsetWidth / 2;
       }
     }
-  }, [gameState]);
+  }, [gameState, avatar, activeGroupId]); // Add activeGroupId to re-scroll when switching tabs
 
   useEffect(() => {
     if (isHost || !pin || !nickname || !socket || !selectedQuiz) {
@@ -164,7 +171,23 @@ export default function PlayPage() {
               className="bg-white/10 backdrop-blur-xl p-12 rounded-[3rem] border border-white/20 shadow-2xl w-full max-w-lg"
             >
               <h1 className="text-5xl font-black text-white mb-4 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">You&apos;re in!</h1>
-              <p className="text-xl font-bold text-white/50 uppercase tracking-widest mb-12">Pick your character</p>
+              <p className="text-xl font-bold text-white/50 uppercase tracking-widest mb-8">Pick your character</p>
+
+              {/* Avatar Groups Tabs */}
+              <div className="flex overflow-x-auto gap-2 mb-8 bg-black/20 p-1.5 rounded-2xl no-scrollbar snap-x">
+                {AVATAR_GROUPS.map((group) => (
+                  <button
+                    key={group.id}
+                    onClick={() => setActiveGroupId(group.id)}
+                    className={`flex-shrink-0 py-2 px-6 rounded-xl text-sm font-black transition-all uppercase tracking-tighter snap-center ${activeGroupId === group.id
+                      ? 'bg-white text-indigo-900 shadow-lg'
+                      : 'text-white/40 hover:text-white/70'
+                      }`}
+                  >
+                    {group.name}
+                  </button>
+                ))}
+              </div>
 
               <div className="relative group mb-12">
                 <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-[#1e1b4b] to-transparent z-10 pointer-events-none" />
@@ -173,7 +196,7 @@ export default function PlayPage() {
                 <div className="flex overflow-x-auto gap-6 px-32 py-4 no-scrollbar snap-x snap-mandatory scroll-smooth"
                   ref={scrollRef}
                 >
-                  {AVATARS.map((a) => (
+                  {(AVATAR_GROUPS.find(g => g.id === activeGroupId)?.avatars || []).map((a) => (
                     <motion.button
                       key={a}
                       data-avatar={a}
