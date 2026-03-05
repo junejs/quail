@@ -7,7 +7,7 @@ import { useSocket } from '@/components/socket-provider';
 import { useGameStore } from '@/lib/store';
 import confetti from 'canvas-confetti';
 import { audioManager } from '@/lib/audio-manager';
-import { Volume2, VolumeX } from 'lucide-react';
+import { Volume2, VolumeX, Pause, Play } from 'lucide-react';
 import AuthGuard from '@/components/auth-guard';
 import HostLeaderboard from '@/components/HostLeaderboard';
 import HostLobby from '@/components/HostLobby';
@@ -47,6 +47,7 @@ export default function HostPage() {
   const [isMuted, setIsMuted] = useState(false);
   const [isAudioBlocked, setIsAudioBlocked] = useState(false);
   const [showQR, setShowQR] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     const checkAudio = () => {
@@ -118,6 +119,15 @@ export default function HostPage() {
       });
     };
 
+    const onGamePaused = ({ timeRemaining }: { timeRemaining: number }) => {
+      setIsPaused(true);
+      setTimeLeft(timeRemaining);
+    };
+
+    const onGameResumed = () => {
+      setIsPaused(false);
+    };
+
     socket.on('player_joined', onPlayerJoined);
     socket.on('player_left', onPlayerLeft);
     socket.on('question_started', onQuestionStarted);
@@ -126,6 +136,8 @@ export default function HostPage() {
     socket.on('question_result_shown', onQuestionResultShown);
     socket.on('leaderboard_updated', onLeaderboardUpdated);
     socket.on('game_ended', onGameEnded);
+    socket.on('game_paused', onGamePaused);
+    socket.on('game_resumed', onGameResumed);
 
     return () => {
       socket.off('player_joined', onPlayerJoined);
@@ -136,6 +148,8 @@ export default function HostPage() {
       socket.off('question_result_shown', onQuestionResultShown);
       socket.off('leaderboard_updated', onLeaderboardUpdated);
       socket.off('game_ended', onGameEnded);
+      socket.off('game_paused', onGamePaused);
+      socket.off('game_resumed', onGameResumed);
     };
   }, [socket, isHost, pin, router, setPlayers, setGameState, selectedQuiz, gameState]);
 
@@ -159,13 +173,13 @@ export default function HostPage() {
   }, [gameState]);
 
   useEffect(() => {
-    if (gameState === 'question' && timeLeft > 0) {
+    if (gameState === 'question' && timeLeft > 0 && !isPaused) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
-    } else if (gameState === 'question' && timeLeft === 0) {
+    } else if (gameState === 'question' && timeLeft === 0 && !isPaused) {
       socket?.emit('show_question_result', pin);
     }
-  }, [gameState, timeLeft, socket, pin]);
+  }, [gameState, timeLeft, socket, pin, isPaused]);
 
   const handleStartGame = async () => {
     // Unlock audio context before starting game
@@ -184,6 +198,14 @@ export default function HostPage() {
     } else {
       socket?.emit('end_game', pin);
     }
+  };
+
+  const handlePauseGame = () => {
+    socket?.emit('pause_game', pin);
+  };
+
+  const handleResumeGame = () => {
+    socket?.emit('resume_game', pin);
   };
 
   const handleToggleChart = () => {
@@ -244,6 +266,9 @@ export default function HostPage() {
               timeLeft={timeLeft}
               answersCount={answersCount}
               players={players}
+              isPaused={isPaused}
+              onPause={handlePauseGame}
+              onResume={handleResumeGame}
               t={t}
             />
           )}

@@ -53,6 +53,8 @@ interface Room {
   questionStartTime: number;
   answers: Record<string, number>; // playerId -> optionIndex
   quiz: any;
+  isPaused: boolean;
+  pausedTimeRemaining: number; // Store time left when paused
 }
 
 const rooms: Record<string, Room> = {};
@@ -214,6 +216,8 @@ io.on('connection', (socket) => {
       questionStartTime: 0,
       answers: {},
       quiz,
+      isPaused: false,
+      pausedTimeRemaining: 0,
     };
     socket.join(pin);
     socket.emit('room_created', pin);
@@ -285,13 +289,15 @@ io.on('connection', (socket) => {
     if (room.hostSessionId === sessionId) {
       room.hostId = socket.id;
       socket.join(pin);
-      socket.emit('rejoined_room', { 
-        pin, 
+      socket.emit('rejoined_room', {
+        pin,
         isHost: true,
         quiz: room.quiz,
         gameState: room.state,
         currentQuestionIndex: room.currentQuestionIndex,
-        players: Object.values(room.players)
+        players: Object.values(room.players),
+        isPaused: room.isPaused,
+        pausedTimeRemaining: room.pausedTimeRemaining
       });
       return;
     }
@@ -310,13 +316,14 @@ io.on('connection', (socket) => {
     room.players[socket.id] = player;
 
     socket.join(pin);
-    socket.emit('rejoined_room', { 
-      pin, 
+    socket.emit('rejoined_room', {
+      pin,
       isHost: false,
-      player, 
+      player,
       quiz: room.quiz,
       gameState: room.state,
-      currentQuestionIndex: room.currentQuestionIndex
+      currentQuestionIndex: room.currentQuestionIndex,
+      isPaused: room.isPaused
     });
 
     // Notify host
@@ -331,7 +338,9 @@ io.on('connection', (socket) => {
       room.currentQuestionIndex = 0;
       room.questionStartTime = Date.now();
       room.answers = {};
-      
+      room.isPaused = false;
+      room.pausedTimeRemaining = 0;
+
       // Reset player answer states
       Object.values(room.players).forEach(p => {
         p.hasAnswered = false;
@@ -351,13 +360,43 @@ io.on('connection', (socket) => {
       room.currentQuestionIndex++;
       room.questionStartTime = Date.now();
       room.answers = {};
-      
+      room.isPaused = false;
+      room.pausedTimeRemaining = 0;
+
       Object.values(room.players).forEach(p => {
         p.hasAnswered = false;
         p.lastAnswerCorrect = false;
       });
 
       io.to(pin).emit('question_started', room.currentQuestionIndex);
+    }
+  });
+
+  // Host pauses the game
+  socket.on('pause_game', (pin) => {
+    const room = rooms[pin];
+    if (room && room.hostId === socket.id && room.state === 'question' && !room.isPaused) {
+      room.isPaused = true;
+      // Calculate remaining time based on when question started
+      const currentQuestion = room.quiz.questions[room.currentQuestionIndex];
+      const timeLimit = currentQuestion.timeLimit || 20;
+      const elapsedTime = Math.floor((Date.now() - room.questionStartTime) / 1000);
+      room.pausedTimeRemaining = Math.max(0, timeLimit - elapsedTime);
+
+      io.to(pin).emit('game_paused', { timeRemaining: room.pausedTimeRemaining });
+    }
+  });
+
+  // Host resumes the game
+  socket.on('resume_game', (pin) => {
+    const room = rooms[pin];
+    if (room && room.hostId === socket.id && room.state === 'question' && room.isPaused) {
+      room.isPaused = false;
+      // Reset question start time to account for the pause
+      room.questionStartTime = Date.now() - (room.pausedTimeRemaining * 1000 - (room.quiz.questions[room.currentQuestionIndex].timeLimit * 1000));
+      room.pausedTimeRemaining = 0;
+
+      io.to(pin).emit('game_resumed');
     }
   });
 

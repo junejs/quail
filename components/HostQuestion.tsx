@@ -1,5 +1,6 @@
 import { motion } from 'motion/react';
 import { Quiz } from '@/lib/store';
+import { Pause, Play } from 'lucide-react';
 
 type HostQuestionProps = {
   selectedQuiz: Quiz;
@@ -7,6 +8,9 @@ type HostQuestionProps = {
   timeLeft: number;
   answersCount: number;
   players: any[];
+  isPaused: boolean;
+  onPause: () => void;
+  onResume: () => void;
   t: (key: string) => string;
 };
 
@@ -16,6 +20,9 @@ export default function HostQuestion({
   timeLeft,
   answersCount,
   players,
+  isPaused,
+  onPause,
+  onResume,
   t
 }: HostQuestionProps) {
   const question = selectedQuiz.questions[currentQuestionIndex];
@@ -49,12 +56,26 @@ export default function HostQuestion({
             borderColor: timeLeft <= 5 ? ['rgba(255,255,255,0.2)', '#ef4444', 'rgba(255,255,255,0.2)'] : 'rgba(255,255,255,0.2)'
           }}
           transition={{ duration: 0.5, repeat: timeLeft <= 5 ? Infinity : 0 }}
-          className="w-40 h-40 rounded-full bg-white/5 backdrop-blur-md border-8 border-white/10 flex items-center justify-center text-7xl font-black text-white shadow-2xl"
+          className="w-40 h-40 rounded-full bg-white/5 backdrop-blur-md border-8 border-white/10 flex items-center justify-center text-7xl font-black text-white shadow-2xl relative"
         >
-          {timeLeft}
+          {isPaused && (
+            <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center backdrop-blur-sm">
+              <Pause size={48} className="text-white" fill="currentColor" />
+            </div>
+          )}
+          {!isPaused && timeLeft}
         </motion.div>
-        <div className="text-4xl font-black text-white/40 bg-white/5 backdrop-blur-md px-12 py-6 rounded-[2rem] border border-white/10 shadow-xl">
-          {t('host.answers')}: <span className="text-white">{answersCount}</span> <span className="text-white/20">/</span> {players.length}
+        <div className="flex items-center gap-6">
+          <button
+            onClick={isPaused ? onResume : onPause}
+            className="p-6 rounded-full bg-white/10 backdrop-blur-md text-white border border-white/20 hover:bg-white/20 transition-all shadow-xl"
+            title={isPaused ? t('host.resume') : t('host.pause')}
+          >
+            {isPaused ? <Play size={32} fill="currentColor" /> : <Pause size={32} fill="currentColor" />}
+          </button>
+          <div className="text-4xl font-black text-white/40 bg-white/5 backdrop-blur-md px-12 py-6 rounded-[2rem] border border-white/10 shadow-xl">
+            {t('host.answers')}: <span className="text-white">{answersCount}</span> <span className="text-white/20">/</span> {players.length}
+          </div>
         </div>
       </div>
 

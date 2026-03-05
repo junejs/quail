@@ -57,6 +57,7 @@ export default function PlayPage() {
   const [selectedIndexes, setSelectedIndexes] = useState<number[]>([]);
   const [isAudioBlocked, setIsAudioBlocked] = useState(false);
   const [finalRank, setFinalRank] = useState<number | null>(null);
+  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     const checkAudio = () => {
@@ -107,21 +108,33 @@ export default function PlayPage() {
       setGameState('podium');
     };
 
+    const onGamePaused = () => {
+      setIsPaused(true);
+    };
+
+    const onGameResumed = () => {
+      setIsPaused(false);
+    };
+
     socket.on('question_started', onQuestionStarted);
     socket.on('answer_result', onAnswerResult);
     socket.on('leaderboard_updated', onLeaderboardUpdated);
     socket.on('game_ended', onGameEnded);
+    socket.on('game_paused', onGamePaused);
+    socket.on('game_resumed', onGameResumed);
 
     return () => {
       socket.off('question_started', onQuestionStarted);
       socket.off('answer_result', onAnswerResult);
       socket.off('leaderboard_updated', onLeaderboardUpdated);
       socket.off('game_ended', onGameEnded);
+      socket.off('game_paused', onGamePaused);
+      socket.off('game_resumed', onGameResumed);
     };
   }, [socket, isHost, pin, nickname, router, setGameState, setScore, setStreak, selectedQuiz]);
 
   const toggleSelection = (index: number) => {
-    if (hasAnswered) return;
+    if (hasAnswered || isPaused) return;
 
     const question = selectedQuiz!.questions[currentQuestionIndex];
     if (question.type === 'multiple') {
@@ -136,7 +149,7 @@ export default function PlayPage() {
   };
 
   const handleAnswer = (indexes: number[]) => {
-    if (hasAnswered || !socket || !selectedQuiz || indexes.length === 0) return;
+    if (hasAnswered || isPaused || !socket || !selectedQuiz || indexes.length === 0) return;
 
     audioManager?.unlock();
     setHasAnswered(true);
@@ -186,6 +199,7 @@ export default function PlayPage() {
             selectedIndexes={selectedIndexes}
             onToggleSelection={toggleSelection}
             onSubmitAnswer={handleAnswer}
+            isPaused={isPaused}
             t={t}
           />
         )}

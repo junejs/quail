@@ -110,7 +110,10 @@
     "backToHome": "返回首页",
     "answers": "回答人数",
     "explanation": "解析",
-    "multipleChoiceSelectAll": "多选题 - 请选择所有正确选项"
+    "multipleChoiceSelectAll": "多选题 - 请选择所有正确选项",
+    "pause": "暂停",
+    "resume": "继续",
+    "gamePaused": "游戏已暂停"
   },
   "create": {
     "createQuiz": "创建测验",

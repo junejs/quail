@@ -1,5 +1,6 @@
 import { motion } from 'motion/react';
 import { Quiz } from '@/lib/store';
+import { Pause } from 'lucide-react';
 
 type PlayQuestionProps = {
   selectedQuiz: Quiz;
@@ -7,6 +8,7 @@ type PlayQuestionProps = {
   selectedIndexes: number[];
   onToggleSelection: (index: number) => void;
   onSubmitAnswer: (indexes: number[]) => void;
+  isPaused: boolean;
   t: (key: string) => string;
 };
 
@@ -16,6 +18,7 @@ export default function PlayQuestion({
   selectedIndexes,
   onToggleSelection,
   onSubmitAnswer,
+  isPaused,
   t
 }: PlayQuestionProps) {
   const question = selectedQuiz.questions[currentQuestionIndex];
@@ -26,7 +29,7 @@ export default function PlayQuestion({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="flex-1 flex flex-col p-4 gap-4"
+      className="flex-1 flex flex-col p-4 gap-4 relative"
     >
       <div className={`flex-1 grid gap-4 ${question.type === 'true_false' ? 'grid-cols-1 grid-rows-2' : 'grid-cols-2 grid-rows-2'}`}>
         {question.options.map((opt: any, i: number) => (
@@ -70,6 +73,18 @@ export default function PlayQuestion({
         >
           {t('play.submitAnswer')}
         </motion.button>
+      )}
+
+      {/* Pause Overlay */}
+      {isPaused && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="absolute inset-0 bg-black/80 backdrop-blur-md flex flex-col items-center justify-center z-50"
+        >
+          <Pause size={64} className="text-white mb-4" fill="currentColor" />
+          <p className="text-white font-black text-3xl uppercase tracking-widest">{t('host.gamePaused')}</p>
+        </motion.div>
       )}
     </motion.div>
   );

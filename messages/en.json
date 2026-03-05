@@ -110,7 +110,10 @@
     "backToHome": "Back to Home",
     "answers": "Answers",
     "explanation": "Explanation",
-    "multipleChoiceSelectAll": "Multiple Choice - Select all that apply"
+    "multipleChoiceSelectAll": "Multiple Choice - Select all that apply",
+    "pause": "Pause",
+    "resume": "Resume",
+    "gamePaused": "Game Paused"
   },
   "create": {
     "createQuiz": "Create Quiz",
