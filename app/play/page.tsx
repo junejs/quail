@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSocket } from '@/components/socket-provider';
@@ -8,11 +8,29 @@ import { useGameStore } from '@/lib/store';
 import { audioManager } from '@/lib/audio-manager';
 import { AVATARS, AVATAR_GROUPS } from '@/lib/constants';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useTranslation } from '@/lib/translations';
+import { useI18nStore } from '@/lib/i18n';
+
+function useStore<T>(store: { getState: () => T; subscribe: (listener: () => void) => () => void }, selector: (state: T) => any) {
+  return useSyncExternalStore(
+    store.subscribe,
+    () => selector(store.getState()),
+    () => selector(store.getState())
+  );
+}
 
 export default function PlayPage() {
   const router = useRouter();
   const { socket } = useSocket();
   const { pin, nickname, avatar, setAvatar, isHost, gameState, setGameState, score, setScore, streak, setStreak, selectedQuiz, resetGame } = useGameStore();
+  const { t } = useTranslation();
+  const locale = useStore(useI18nStore, (state) => state.locale);
+
+  // Initialize locale
+  useEffect(() => {
+    const { initLocale } = require('@/lib/i18n');
+    initLocale();
+  }, []);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(-1);
@@ -170,8 +188,8 @@ export default function PlayPage() {
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               className="bg-white/10 backdrop-blur-xl p-12 rounded-[3rem] border border-white/20 shadow-2xl w-full max-w-lg"
             >
-              <h1 className="text-5xl font-black text-white mb-4 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">You&apos;re in!</h1>
-              <p className="text-xl font-bold text-white/50 uppercase tracking-widest mb-8">Pick your character</p>
+              <h1 className="text-5xl font-black text-white mb-4 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">{t('play.youreIn')}</h1>
+              <p className="text-xl font-bold text-white/50 uppercase tracking-widest mb-8">{t('play.pickCharacter')}</p>
 
               {/* Avatar Groups Tabs */}
               <div className="flex overflow-x-auto gap-2 mb-8 bg-black/20 p-1.5 rounded-2xl no-scrollbar snap-x">
@@ -184,7 +202,7 @@ export default function PlayPage() {
                       : 'text-white/40 hover:text-white/70'
                       }`}
                   >
-                    {group.name}
+                    {t(group.name)}
                   </button>
                 ))}
               </div>
@@ -274,7 +292,7 @@ export default function PlayPage() {
                 disabled={selectedIndexes.length === 0}
                 className="bg-white text-indigo-600 font-black text-3xl py-8 rounded-[2rem] shadow-[0_0_30px_rgba(255,255,255,0.2)] disabled:opacity-50 uppercase tracking-widest"
               >
-                Submit Answer
+                {t('play.submitAnswer')}
               </motion.button>
             )}
           </motion.div>
@@ -294,8 +312,8 @@ export default function PlayPage() {
                 <div className="w-12 h-12 bg-indigo-500/20 blur-xl rounded-full animate-pulse" />
               </div>
             </div>
-            <h1 className="text-4xl font-black text-white mb-2">Waiting for others...</h1>
-            <p className="text-white/40 font-bold uppercase tracking-widest text-xs">The tension is building!</p>
+            <h1 className="text-4xl font-black text-white mb-2">{t('play.waiting')}</h1>
+            <p className="text-white/40 font-bold uppercase tracking-widest text-xs">{t('play.tensionBuilding')}</p>
           </motion.div>
         )}
 
@@ -326,7 +344,7 @@ export default function PlayPage() {
               animate={{ y: 0, opacity: 1 }}
               className="text-7xl font-black mb-6 drop-shadow-2xl"
             >
-              {answerResult.isCorrect ? 'CORRECT!' : 'INCORRECT'}
+              {answerResult.isCorrect ? t('play.correctFeedback') : t('play.incorrectFeedback')}
             </motion.h1>
 
             <motion.div
@@ -338,7 +356,7 @@ export default function PlayPage() {
             </motion.div>
 
             <div className="bg-black/30 backdrop-blur-md border border-white/10 px-10 py-6 rounded-[2.5rem] mb-6 w-full max-w-xs shadow-2xl">
-              <p className="text-xs font-black uppercase tracking-[0.3em] opacity-50 mb-2">Total Score</p>
+              <p className="text-xs font-black uppercase tracking-[0.3em] opacity-50 mb-2">{t('play.totalScore')}</p>
               <p className="text-6xl font-black">{answerResult.score}</p>
             </div>
 
@@ -358,7 +376,7 @@ export default function PlayPage() {
                     transition={{ duration: 1, repeat: Infinity }}
                     className="bg-orange-500 text-white px-8 py-3 rounded-full font-black text-xl shadow-[0_0_20px_rgba(249,115,22,0.5)] flex items-center justify-center gap-3"
                   >
-                    <span>🔥</span> {answerResult.streak} STREAK!
+                    <span>🔥</span> {answerResult.streak} {t('play.streakFeedback')}
                   </motion.div>
                 )}
               </motion.div>
@@ -366,7 +384,7 @@ export default function PlayPage() {
 
             {!answerResult.isCorrect && (
               <p className="text-2xl font-black mt-8 opacity-60 uppercase tracking-widest">
-                Keep going!
+                {t('play.keepGoing')}
               </p>
             )}
           </motion.div>
@@ -382,14 +400,14 @@ export default function PlayPage() {
           >
             <div className="bg-white/10 backdrop-blur-xl p-12 rounded-[3rem] border border-white/20 shadow-2xl w-full max-w-sm">
               <h1 className="text-4xl font-black text-white mb-8">
-                {score > 0 ? 'You&apos;re climbing!' : 'Ready for next?'}
+                {score > 0 ? t('play.climbing') : t('play.readyForNext')}
               </h1>
               <div className="text-8xl mb-10 drop-shadow-2xl animate-bounce">{avatar}</div>
               <div className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl mb-8">
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-2">Current Score</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-2">{t('play.currentScore')}</p>
                 <p className="text-5xl font-black text-white">{score}</p>
               </div>
-              <p className="text-xs font-black uppercase tracking-[0.4em] text-indigo-400 animate-pulse">Look at the big screen</p>
+              <p className="text-xs font-black uppercase tracking-[0.4em] text-indigo-400 animate-pulse">{t('play.lookAtBigScreen')}</p>
             </div>
           </motion.div>
         )}
@@ -405,7 +423,7 @@ export default function PlayPage() {
               {/* Decorative inner glow */}
               <div className="absolute -top-24 -left-24 w-48 h-48 bg-indigo-500/30 blur-3xl rounded-full pointer-events-none" />
 
-              <h1 className="text-5xl font-black text-white mb-4 uppercase tracking-tighter">Game Over!</h1>
+              <h1 className="text-5xl font-black text-white mb-4 uppercase tracking-tighter">{t('play.gameOver')}</h1>
 
               <motion.div
                 animate={{ rotate: [0, 5, -5, 0] }}
@@ -416,17 +434,17 @@ export default function PlayPage() {
               </motion.div>
 
               <div className="bg-white text-indigo-900 px-12 py-10 rounded-[2.5rem] shadow-2xl my-8 transform hover:scale-105 transition-transform">
-                <p className="text-sm font-black uppercase tracking-[0.3em] opacity-40 mb-2">Final Rank</p>
+                <p className="text-sm font-black uppercase tracking-[0.3em] opacity-40 mb-2">{t('play.finalRank')}</p>
                 <p className="text-9xl font-black leading-none">
                   {finalRank}
                   <span className="text-4xl align-top ml-1">
-                    {finalRank === 1 ? 'st' : finalRank === 2 ? 'nd' : finalRank === 3 ? 'rd' : 'th'}
+                    {finalRank === 1 ? t('play.rank.st') : finalRank === 2 ? t('play.rank.nd') : finalRank === 3 ? t('play.rank.rd') : t('play.rank.th')}
                   </span>
                 </p>
               </div>
 
               <div className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl mb-10">
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-1">Final Score</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-1">{t('play.finalScore')}</p>
                 <p className="text-5xl font-black text-white">{score}</p>
               </div>
 
@@ -439,7 +457,7 @@ export default function PlayPage() {
                 }}
                 className="w-full bg-indigo-600 text-white px-10 py-6 rounded-2xl font-black text-2xl shadow-[0_0_20px_rgba(79,70,229,0.4)] hover:bg-indigo-500 transition-all uppercase tracking-widest"
               >
-                Play Again
+                {t('play.playAgain')}
               </motion.button>
             </div>
           </motion.div>
@@ -457,7 +475,7 @@ export default function PlayPage() {
           >
             <div className="bg-indigo-600/80 backdrop-blur-xl border border-white/20 px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3">
               <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
-              <span className="text-white font-black text-xs uppercase tracking-widest">Click anywhere to enable sound</span>
+              <span className="text-white font-black text-xs uppercase tracking-widest">{t('play.clickToEnableSound')}</span>
             </div>
           </motion.div>
         )}

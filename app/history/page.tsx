@@ -4,12 +4,14 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
 import { useGameStore } from '@/lib/store';
+import { useTranslation } from '@/lib/translations';
 import { ArrowLeft, Trophy, Calendar, Hash, Users, ChevronRight, ChevronDown } from 'lucide-react';
 import AuthGuard from '@/components/auth-guard';
 
 export default function HistoryPage() {
   const router = useRouter();
   const { gameResults, fetchResults } = useGameStore();
+  const { t } = useTranslation();
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -18,7 +20,7 @@ export default function HistoryPage() {
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat(t('language.en') === 'English' ? 'en-US' : 'zh-CN', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
@@ -37,10 +39,10 @@ export default function HistoryPage() {
               className="flex items-center gap-2 text-zinc-500 hover:text-zinc-900 transition-colors font-bold"
             >
               <ArrowLeft size={20} />
-              Back to Home
+              {t('history.back')}
             </button>
             <h1 className="text-3xl font-black tracking-tighter text-zinc-900">
-              Match History
+              {t('history.title')}
             </h1>
           </header>
 
@@ -49,8 +51,8 @@ export default function HistoryPage() {
               <div className="w-16 h-16 bg-zinc-50 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Trophy className="text-zinc-300" size={32} />
               </div>
-              <h2 className="text-xl font-bold text-zinc-900 mb-2">No games played yet</h2>
-              <p className="text-zinc-500">Host a game and finish it to see results here!</p>
+              <h2 className="text-xl font-bold text-zinc-900 mb-2">{t('history.noGames')}</h2>
+              <p className="text-zinc-500">{t('history.playToSee')}</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -78,13 +80,13 @@ export default function HistoryPage() {
                         </span>
                         <span className="flex items-center gap-1.5">
                           <Users size={14} />
-                          {result.standings.length} Players
+                          {result.standings.length} {t('history.players')}
                         </span>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right hidden md:block">
-                        <div className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Winner</div>
+                        <div className="text-xs font-bold text-zinc-400 uppercase tracking-widest">{t('history.winner')}</div>
                         <div className="text-indigo-600 font-black">{result.standings[0]?.nickname || 'N/A'}</div>
                       </div>
                       <div className="p-2 bg-zinc-100 rounded-full text-zinc-400">
@@ -98,9 +100,9 @@ export default function HistoryPage() {
                       <div className="pt-6 space-y-2">
                         <div className="grid grid-cols-12 px-4 py-2 text-xs font-bold text-zinc-400 uppercase tracking-widest">
                           <div className="col-span-1">#</div>
-                          <div className="col-span-6">Player</div>
-                          <div className="col-span-3 text-right">Score</div>
-                          <div className="col-span-2 text-right">Streak</div>
+                          <div className="col-span-6">{t('history.players')}</div>
+                          <div className="col-span-3 text-right">{t('history.score')}</div>
+                          <div className="col-span-2 text-right">{t('history.streak')}</div>
                         </div>
                         {result.standings.map((player: any, index: number) => (
                           <div 

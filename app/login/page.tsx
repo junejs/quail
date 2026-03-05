@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'motion/react';
 import { useGameStore } from '@/lib/store';
+import { useTranslation } from '@/lib/translations';
 import { Lock, User, ArrowRight, AlertCircle } from 'lucide-react';
 
 function LoginContent() {
@@ -11,6 +12,7 @@ function LoginContent() {
   const searchParams = useSearchParams();
   const callback = searchParams.get('callback') || '/';
   const { checkAuth, ldapEnabled } = useGameStore();
+  const { t } = useTranslation();
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -44,10 +46,10 @@ function LoginContent() {
         router.push(callback);
       } else {
         const data = await res.json();
-        setError(data.error || 'Invalid credentials');
+        setError(data.error || t('login.invalidCredentials'));
       }
     } catch (err) {
-      setError('Connection failed. Please try again.');
+      setError(t('login.connectionFailed'));
     } finally {
       setLoading(false);
     }
@@ -64,20 +66,20 @@ function LoginContent() {
           <div className="inline-flex p-5 rounded-3xl bg-indigo-500/20 border border-indigo-500/30 mb-6">
             <Lock className="w-10 h-10 text-indigo-400" />
           </div>
-          <h1 className="text-4xl font-black text-white tracking-tighter mb-2">Host Login</h1>
-          <p className="text-white/40 font-bold uppercase tracking-widest text-xs">LDAP Authentication Required</p>
+          <h1 className="text-4xl font-black text-white tracking-tighter mb-2">{t('login.hostLogin')}</h1>
+          <p className="text-white/40 font-bold uppercase tracking-widest text-xs">{t('login.ldapRequired')}</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.4em] ml-4">Username</label>
+            <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.4em] ml-4">{t('login.username')}</label>
             <div className="relative">
               <User className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20" />
-              <input 
+              <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="LDAP Username"
+                placeholder={t('login.usernamePlaceholder')}
                 required
                 className="w-full pl-16 pr-6 py-5 bg-white/5 border-2 border-white/10 rounded-2xl focus:border-white focus:bg-white/10 text-white placeholder:text-white/10 outline-none transition-all font-bold"
               />
@@ -85,14 +87,14 @@ function LoginContent() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.4em] ml-4">Password</label>
+            <label className="text-[10px] font-black text-white/40 uppercase tracking-[0.4em] ml-4">{t('login.password')}</label>
             <div className="relative">
               <Lock className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20" />
-              <input 
+              <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder={t('login.passwordPlaceholder')}
                 required
                 className="w-full pl-16 pr-6 py-5 bg-white/5 border-2 border-white/10 rounded-2xl focus:border-white focus:bg-white/10 text-white placeholder:text-white/10 outline-none transition-all font-bold"
               />
@@ -110,7 +112,7 @@ function LoginContent() {
             </motion.div>
           )}
 
-          <motion.button 
+          <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             disabled={loading}
@@ -120,18 +122,18 @@ function LoginContent() {
               <div className="w-6 h-6 border-4 border-indigo-900/20 border-t-indigo-900 rounded-full animate-spin" />
             ) : (
               <>
-                Login
+                {t('login.login')}
                 <ArrowRight className="w-6 h-6" />
               </>
             )}
           </motion.button>
         </form>
 
-        <button 
+        <button
           onClick={() => router.push('/')}
           className="w-full mt-8 text-white/30 hover:text-white text-xs font-black uppercase tracking-widest transition-colors"
         >
-          Back to Home
+          {t('login.backToHome')}
         </button>
       </motion.div>
     </div>

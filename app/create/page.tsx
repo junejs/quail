@@ -4,12 +4,14 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import { useGameStore } from '@/lib/store';
+import { useTranslation } from '@/lib/translations';
 import { Plus, Trash2, Save, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import AuthGuard from '@/components/auth-guard';
 
 export default function CreateQuizPage() {
   const router = useRouter();
   const { addQuiz } = useGameStore();
+  const { t } = useTranslation();
 
   const [title, setTitle] = useState('');
   const [questions, setQuestions] = useState<any[]>([
@@ -58,7 +60,7 @@ export default function CreateQuizPage() {
 
   const handleQuestionChange = (index: number, field: string, value: any) => {
     const newQuestions = [...questions];
-    
+
     if (field === 'type') {
       if (value === 'true_false') {
         newQuestions[index].options = [
@@ -76,7 +78,7 @@ export default function CreateQuizPage() {
         newQuestions[index].correctAnswerIndexes = [0];
       }
     }
-    
+
     newQuestions[index][field] = value;
     setQuestions(newQuestions);
   };
@@ -84,7 +86,7 @@ export default function CreateQuizPage() {
   const toggleCorrectAnswer = (qIndex: number, oIndex: number) => {
     const newQuestions = [...questions];
     const question = newQuestions[qIndex];
-    
+
     if (question.type === 'multiple') {
       if (question.correctAnswerIndexes.includes(oIndex)) {
         if (question.correctAnswerIndexes.length > 1) {
@@ -96,7 +98,7 @@ export default function CreateQuizPage() {
     } else {
       question.correctAnswerIndexes = [oIndex];
     }
-    
+
     setQuestions(newQuestions);
   };
 
@@ -108,11 +110,11 @@ export default function CreateQuizPage() {
 
   const handleSave = async () => {
     if (!title.trim()) {
-      alert('Please enter a quiz title');
+      alert(t('create.quizTitle') + ' ' + t('common.required'));
       return;
     }
     if (questions.some(q => !q.text.trim() || q.options.some((o: any) => !o.text.trim()))) {
-      alert('Please fill in all questions and options');
+      alert(t('create.fillAll'));
       return;
     }
 
@@ -131,35 +133,35 @@ export default function CreateQuizPage() {
       <div className="min-h-screen p-4 md:p-8 font-sans relative overflow-hidden">
         <div className="max-w-4xl mx-auto relative z-10">
           <div className="flex items-center justify-between mb-12">
-            <motion.button 
+            <motion.button
               whileHover={{ x: -5 }}
               onClick={() => router.push('/')}
               className="flex items-center gap-3 text-white/50 hover:text-white font-black uppercase tracking-widest text-sm transition-all"
             >
               <ArrowLeft size={20} />
-              Back
+              {t('common.back')}
             </motion.button>
-            <h1 className="text-4xl font-black text-white tracking-tighter drop-shadow-2xl">Create New Quiz</h1>
-            <motion.button 
+            <h1 className="text-4xl font-black text-white tracking-tighter drop-shadow-2xl">{t('create.createQuiz')}</h1>
+            <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleSave}
               className="flex items-center gap-3 bg-white text-indigo-900 px-8 py-4 rounded-2xl font-black hover:bg-indigo-50 transition-all shadow-[0_0_30px_rgba(255,255,255,0.2)] uppercase tracking-widest text-sm"
             >
               <Save size={20} />
-              Save Quiz
+              {t('create.saveQuiz')}
             </motion.button>
           </div>
 
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="bg-white/10 backdrop-blur-xl p-10 rounded-[2.5rem] shadow-2xl mb-12 border border-white/20"
           >
-            <label className="block text-[10px] font-black text-white/40 uppercase tracking-[0.4em] mb-3">Quiz Title</label>
-            <input 
-              type="text" 
-              placeholder="Enter a catchy title..."
+            <label className="block text-[10px] font-black text-white/40 uppercase tracking-[0.4em] mb-3">{t('create.quizTitle')}</label>
+            <input
+              type="text"
+              placeholder={t('create.titlePlaceholder')}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full text-4xl font-black p-6 bg-white/5 border-2 border-white/10 rounded-3xl focus:border-white focus:bg-white/10 text-white placeholder:text-white/20 outline-none transition-all"
@@ -169,15 +171,15 @@ export default function CreateQuizPage() {
           <div className="space-y-12">
             <AnimatePresence mode="popLayout">
               {questions.map((q, qIndex) => (
-                <motion.div 
+                <motion.div
                   layout
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
-                  key={q.id} 
+                  key={q.id}
                   className="bg-white/5 backdrop-blur-lg p-10 rounded-[3rem] shadow-xl border border-white/10 relative group hover:bg-white/[0.07] transition-colors"
                 >
-                  <motion.button 
+                  <motion.button
                     whileHover={{ scale: 1.1, rotate: 90 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={() => handleRemoveQuestion(qIndex)}
@@ -188,20 +190,20 @@ export default function CreateQuizPage() {
 
                   <div className="flex flex-wrap justify-between items-center gap-6 mb-10">
                     <div className="flex items-center gap-6">
-                      <span className="bg-white/10 text-white px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest border border-white/10">Question {qIndex + 1}</span>
-                      <select 
+                      <span className="bg-white/10 text-white px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest border border-white/10">{t('host.question')} {qIndex + 1}</span>
+                      <select
                         value={q.type}
                         onChange={(e) => handleQuestionChange(qIndex, 'type', e.target.value)}
                         className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 font-black text-sm text-white outline-none focus:border-white/30 transition-all cursor-pointer"
                       >
-                        <option value="single" className="bg-zinc-900">Single Choice</option>
-                        <option value="true_false" className="bg-zinc-900">True/False</option>
-                        <option value="multiple" className="bg-zinc-900">Multiple Choice</option>
+                        <option value="single" className="bg-zinc-900">{t('create.singleChoice')}</option>
+                        <option value="true_false" className="bg-zinc-900">{t('create.trueFalse')}</option>
+                        <option value="multiple" className="bg-zinc-900">{t('create.multipleChoice')}</option>
                       </select>
                     </div>
                     <div className="flex items-center gap-4">
-                      <label className="text-[10px] font-black text-white/40 uppercase tracking-widest">Time Limit:</label>
-                      <select 
+                      <label className="text-[10px] font-black text-white/40 uppercase tracking-widest">{t('host.timeRemaining')}:</label>
+                      <select
                         value={q.timeLimit}
                         onChange={(e) => handleQuestionChange(qIndex, 'timeLimit', parseInt(e.target.value))}
                         className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 font-black text-sm text-white outline-none focus:border-white/30 transition-all cursor-pointer"
@@ -215,9 +217,9 @@ export default function CreateQuizPage() {
                     </div>
                   </div>
 
-                  <input 
-                    type="text" 
-                    placeholder="What's the question?"
+                  <input
+                    type="text"
+                    placeholder={t('create.questionPlaceholder')}
                     value={q.text}
                     onChange={(e) => handleQuestionChange(qIndex, 'text', e.target.value)}
                     className="w-full text-3xl font-black p-8 bg-white/5 border-2 border-white/10 rounded-[2rem] focus:border-white focus:bg-white/10 text-white placeholder:text-white/10 outline-none transition-all mb-10 text-center"
@@ -232,15 +234,15 @@ export default function CreateQuizPage() {
                           {opt.shape === 'circle' && <div className="w-7 h-7 bg-white rounded-full" />}
                           {opt.shape === 'square' && <div className="w-7 h-7 bg-white" />}
                         </div>
-                        <input 
-                          type="text" 
-                          placeholder={`Option ${oIndex + 1}`}
+                        <input
+                          type="text"
+                          placeholder={`${t('create.optionPlaceholder')} ${oIndex + 1}`}
                           value={opt.text}
                           readOnly={q.type === 'true_false'}
                           onChange={(e) => handleOptionChange(qIndex, oIndex, e.target.value)}
                           className={`w-full pl-20 pr-16 py-6 bg-white/5 border-2 border-white/10 rounded-2xl focus:border-white focus:bg-white/10 text-white placeholder:text-white/10 outline-none transition-all font-black text-xl ${q.type === 'true_false' ? 'cursor-default' : ''} ${q.correctAnswerIndexes.includes(oIndex) ? 'border-emerald-500/50 bg-emerald-500/5' : ''}`}
                         />
-                        <motion.button 
+                        <motion.button
                           whileHover={{ scale: 1.2 }}
                           whileTap={{ scale: 0.8 }}
                           onClick={() => toggleCorrectAnswer(qIndex, oIndex)}
@@ -253,9 +255,9 @@ export default function CreateQuizPage() {
                   </div>
 
                   <div className="mt-10">
-                    <label className="block text-[10px] font-black text-white/40 uppercase tracking-[0.4em] mb-3">Answer Explanation (Optional)</label>
-                    <textarea 
-                      placeholder="Explain the logic behind the answer..."
+                    <label className="block text-[10px] font-black text-white/40 uppercase tracking-[0.4em] mb-3">{t('create.answerOptions')} {t('create.optional')}</label>
+                    <textarea
+                      placeholder={t('create.explanationPlaceholder')}
                       value={q.explanation || ''}
                       onChange={(e) => handleQuestionChange(qIndex, 'explanation', e.target.value)}
                       className="w-full p-6 bg-white/5 border-2 border-white/10 rounded-2xl focus:border-white focus:bg-white/10 text-white placeholder:text-white/10 outline-none transition-all font-bold text-lg min-h-[120px] resize-none"
@@ -266,7 +268,7 @@ export default function CreateQuizPage() {
             </AnimatePresence>
           </div>
 
-          <motion.button 
+          <motion.button
             whileHover={{ scale: 1.02, backgroundColor: 'rgba(255,255,255,0.1)' }}
             whileTap={{ scale: 0.98 }}
             onClick={handleAddQuestion}
@@ -275,7 +277,7 @@ export default function CreateQuizPage() {
             <div className="bg-white/5 p-5 rounded-full group-hover:bg-white/10 transition-colors border border-white/10">
               <Plus size={40} />
             </div>
-            <span className="text-2xl font-black uppercase tracking-widest">Add Question</span>
+            <span className="text-2xl font-black uppercase tracking-widest">{t('create.addQuestion')}</span>
           </motion.button>
         </div>
       </div>

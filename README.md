@@ -79,6 +79,47 @@ docs/images/podium.png
 - **State Management**: Zustand
 - **Icons**: Lucide React
 - **Backend**: Express
+- **i18n**: Zustand + JSON files
+
+## Internationalization (i18n)
+
+Quail supports multiple languages (English and Chinese) with a client-side translation system.
+
+### Architecture
+
+- **Translation Files**: Stored in `messages/en.json` and `messages/zh.json`
+- **State Management**: Zustand store (`lib/i18n.ts`) manages the current locale
+- **Translation Hook**: `useTranslation()` hook (`lib/translations.ts`) provides access to translations
+- **Language Detection**: Automatically detects browser language, with manual override via localStorage
+
+### Usage
+
+```tsx
+import { useTranslation } from '@/lib/translations';
+
+function MyComponent() {
+  const { t, locale } = useTranslation();
+
+  return <h1>{t('home.title')}</h1>;
+}
+```
+
+### Adding New Translations
+
+1. Add translation keys to both `messages/en.json` and `messages/zh.json`
+2. Use the `t('key.path')` function in components
+3. Supported locales: `en` (English), `zh` (Chinese)
+
+### File Structure
+
+```
+├── messages/
+│   ├── en.json          # English translations
+│   └── zh.json          # Chinese translations
+├── lib/
+│   ├── i18n.ts          # Zustand store for locale state
+│   └── translations.ts  # useTranslation hook
+```
 
 ## Getting Started
 

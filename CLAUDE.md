@@ -81,3 +81,11 @@ Quail uses a full-stack architecture designed for low-latency real-time communic
 - **BGM/SFX**: Distinguish between background music (looping) and sound effects (one-shot).
 - **User Interaction**: Audio must be unlocked via a user interaction (e.g., clicking "Enter" or "Start").
 
+### Internationalization (i18n)
+- **Translation Files**: All translations are stored in `messages/en.json` and `messages/zh.json`
+- **Locale Store**: Use Zustand store in `lib/i18n.ts` for locale state management
+- **useTranslation Hook**: Use `useTranslation` from `lib/translations.ts` for accessing translations
+- **Translation Key Format**: Use dot notation (e.g., `home.title`, `play.correct`)
+- **Adding New Keys**: Always add translations to BOTH language files
+- **Language Switching**: Use `setLocale()` from `useI18nStore` to switch languages
+
