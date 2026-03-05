@@ -1,13 +1,19 @@
 'use client';
 
-import { useEffect, useState, useRef, useSyncExternalStore } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'motion/react';
+import { AnimatePresence } from 'motion/react';
 import { useSocket } from '@/components/socket-provider';
 import { useGameStore } from '@/lib/store';
 import { audioManager } from '@/lib/audio-manager';
 import { AVATARS, AVATAR_GROUPS } from '@/lib/constants';
-import { Shuffle } from 'lucide-react';
+import PlayAnswerResult from '@/components/PlayAnswerResult';
+import PlayAudioBlockedIndicator from '@/components/PlayAudioBlockedIndicator';
+import PlayLeaderboardWait from '@/components/PlayLeaderboardWait';
+import PlayLobby from '@/components/PlayLobby';
+import PlayPodium from '@/components/PlayPodium';
+import PlayQuestion from '@/components/PlayQuestion';
+import PlayWaiting from '@/components/PlayWaiting';
 import { useTranslation } from '@/lib/translations';
 import { useI18nStore } from '@/lib/i18n';
 
@@ -26,7 +32,6 @@ export default function PlayPage() {
   const { t } = useTranslation();
   const locale = useStore(useI18nStore, (state) => state.locale);
 
-  // Initialize locale
   useEffect(() => {
     const { initLocale } = require('@/lib/i18n');
     initLocale();
@@ -49,10 +54,9 @@ export default function PlayPage() {
     lastPointsEarned?: number
   } | null>(null);
 
-  const [finalRank, setFinalRank] = useState<number | null>(null);
-
   const [selectedIndexes, setSelectedIndexes] = useState<number[]>([]);
   const [isAudioBlocked, setIsAudioBlocked] = useState(false);
+  const [finalRank, setFinalRank] = useState<number | null>(null);
 
   useEffect(() => {
     const checkAudio = () => {
@@ -66,8 +70,6 @@ export default function PlayPage() {
     window.addEventListener('click', checkAudio);
     return () => window.removeEventListener('click', checkAudio);
   }, []);
-
-
 
   useEffect(() => {
     if (isHost || !pin || !nickname || !socket || !selectedQuiz) {
@@ -156,7 +158,6 @@ export default function PlayPage() {
     const randomAvatar = AVATARS[Math.floor(Math.random() * AVATARS.length)];
     handleAvatarChange(randomAvatar);
 
-    // Find group for random avatar and set it
     const group = AVATAR_GROUPS.find(g => g.avatars.includes(randomAvatar));
     if (group) setActiveGroupId(group.id);
   };
@@ -167,343 +168,54 @@ export default function PlayPage() {
     <div className="min-h-screen flex flex-col font-sans relative overflow-hidden">
       <AnimatePresence mode="wait">
         {gameState === 'lobby' && (
-          <motion.div
-            key="lobby"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 1.1 }}
-            className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 text-center"
-          >
-            <motion.div
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              className="bg-white/10 backdrop-blur-xl p-6 sm:p-12 rounded-[2rem] sm:rounded-[3rem] border border-white/20 shadow-2xl w-full max-w-xl flex flex-col items-center"
-            >
-              <h1 className="text-3xl sm:text-5xl font-black text-white mb-2 drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">{t('play.youreIn')}</h1>
-              <p className="text-sm sm:text-xl font-bold text-white/50 uppercase tracking-widest mb-6">{t('play.pickCharacter')}</p>
-
-              {/* Selected Avatar Preview */}
-              <div className="relative mb-8 group">
-                {/* Pedestal/Platform */}
-                <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-32 h-8 bg-indigo-500/20 blur-xl rounded-[100%] scale-x-150" />
-                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-24 h-4 bg-white/10 rounded-[100%] border border-white/20" />
-
-                <motion.div
-                  key={avatar}
-                  initial={{ scale: 0.5, opacity: 0, y: 20 }}
-                  animate={{ scale: 1, opacity: 1, y: 0 }}
-                  transition={{ type: "spring", stiffness: 260, damping: 20 }}
-                  className="text-8xl sm:text-9xl drop-shadow-[0_0_30px_rgba(255,255,255,0.4)] cursor-pointer relative z-10"
-                  onClick={handleShuffleAvatar}
-                >
-                  {avatar}
-                  {/* Glowing Aura */}
-                  <motion.div
-                    animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.5, 0.2] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="absolute inset-0 bg-white/20 blur-3xl rounded-full -z-10"
-                  />
-                </motion.div>
-
-                <motion.button
-                  whileHover={{ scale: 1.1, rotate: 180 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={handleShuffleAvatar}
-                  className="absolute -bottom-2 -right-2 bg-indigo-500 text-white p-3 rounded-full shadow-lg border-2 border-white/20 hover:bg-indigo-400 transition-colors z-20"
-                  title="Randomize"
-                >
-                  <Shuffle size={20} />
-                </motion.button>
-              </div>
-
-              {/* Avatar Groups Tabs */}
-              <div className="flex w-full overflow-x-auto gap-2 mb-6 bg-black/20 p-1.5 rounded-2xl no-scrollbar snap-x">
-                {AVATAR_GROUPS.map((group) => (
-                  <button
-                    key={group.id}
-                    onClick={() => setActiveGroupId(group.id)}
-                    className={`flex-shrink-0 py-2 px-4 sm:px-6 rounded-xl text-xs sm:text-sm font-black transition-all uppercase tracking-tighter snap-center ${activeGroupId === group.id
-                      ? 'bg-white text-indigo-900 shadow-lg'
-                      : 'text-white/40 hover:text-white/70'
-                      }`}
-                  >
-                    {t(group.name)}
-                  </button>
-                ))}
-              </div>
-
-              {/* Avatar Grid Selection */}
-              <div className="w-full bg-black/10 rounded-3xl p-4 mb-8">
-                <div
-                  className="grid grid-cols-5 sm:grid-cols-6 gap-3 sm:gap-4 max-h-[240px] overflow-y-auto pr-2 custom-scrollbar"
-                >
-                  <AnimatePresence mode="popLayout">
-                    {Array.from(new Set(AVATAR_GROUPS.find(g => g.id === activeGroupId)?.avatars || [])).map((a) => (
-                      <motion.button
-                        key={`${activeGroupId}-${a}`}
-                        layout
-                        initial={{ opacity: 0, scale: 0.5 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.5 }}
-                        whileHover={{ scale: 1.2, zIndex: 10 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => handleAvatarChange(a)}
-                        className={`text-3xl sm:text-4xl p-2 rounded-xl transition-all duration-200 ${avatar === a
-                          ? 'bg-white/20 shadow-[0_0_15px_rgba(255,255,255,0.2)] scale-110 ring-2 ring-white/50'
-                          : 'hover:bg-white/10 grayscale-[0.5] opacity-60 hover:opacity-100 hover:grayscale-0'
-                          }`}
-                      >
-                        {a}
-                      </motion.button>
-                    ))}
-                  </AnimatePresence>
-                </div>
-              </div>
-
-              <div className="text-2xl sm:text-4xl font-black text-indigo-400 bg-white/5 border border-white/10 px-6 sm:px-10 py-3 sm:py-5 rounded-2xl sm:rounded-3xl shadow-xl inline-block">
-                {nickname}
-              </div>
-            </motion.div>
-          </motion.div>
+          <PlayLobby
+            avatar={avatar}
+            nickname={nickname}
+            activeGroupId={activeGroupId}
+            setActiveGroupId={setActiveGroupId}
+            onShuffleAvatar={handleShuffleAvatar}
+            onAvatarChange={handleAvatarChange}
+            t={t}
+          />
         )}
 
         {gameState === 'question' && !hasAnswered && currentQuestionIndex >= 0 && selectedQuiz && (
-          <motion.div
-            key="question"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="flex-1 flex flex-col p-4 gap-4"
-          >
-            <div className={`flex-1 grid gap-4 ${selectedQuiz.questions[currentQuestionIndex].type === 'true_false' ? 'grid-cols-1 grid-rows-2' : 'grid-cols-2 grid-rows-2'}`}>
-              {selectedQuiz.questions[currentQuestionIndex].options.map((opt: any, i: number) => (
-                <motion.button
-                  key={opt.id}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => toggleSelection(i)}
-                  className={`${opt.color} rounded-3xl shadow-xl flex items-center justify-center transition-all relative overflow-hidden group border-4 ${selectedIndexes.includes(i) ? 'border-white scale-95 shadow-[0_0_30px_rgba(255,255,255,0.5)]' : 'border-transparent'}`}
-                >
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="transform group-hover:scale-110 transition-transform">
-                      {opt.shape === 'triangle' && <div className="w-0 h-0 border-l-[40px] border-r-[40px] border-b-[68px] border-l-transparent border-r-transparent border-b-white drop-shadow-lg" />}
-                      {opt.shape === 'diamond' && <div className="w-20 h-20 bg-white rotate-45 shadow-lg" />}
-                      {opt.shape === 'circle' && <div className="w-24 h-24 bg-white rounded-full shadow-lg" />}
-                      {opt.shape === 'square' && <div className="w-24 h-24 bg-white shadow-lg" />}
-                    </div>
-                    {selectedQuiz.questions[currentQuestionIndex].type === 'multiple' && selectedIndexes.includes(i) && (
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className="absolute top-6 right-6 bg-white text-indigo-600 rounded-full p-2 shadow-xl"
-                      >
-                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={5} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </motion.div>
-                    )}
-                  </div>
-                  {/* Decorative inner glow */}
-                  <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </motion.button>
-              ))}
-            </div>
-            {selectedQuiz.questions[currentQuestionIndex].type === 'multiple' && (
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => handleAnswer(selectedIndexes)}
-                disabled={selectedIndexes.length === 0}
-                className="bg-white text-indigo-600 font-black text-3xl py-8 rounded-[2rem] shadow-[0_0_30px_rgba(255,255,255,0.2)] disabled:opacity-50 uppercase tracking-widest"
-              >
-                {t('play.submitAnswer')}
-              </motion.button>
-            )}
-          </motion.div>
+          <PlayQuestion
+            selectedQuiz={selectedQuiz}
+            currentQuestionIndex={currentQuestionIndex}
+            selectedIndexes={selectedIndexes}
+            onToggleSelection={toggleSelection}
+            onSubmitAnswer={handleAnswer}
+            t={t}
+          />
         )}
 
         {gameState === 'question' && hasAnswered && !answerResult && (
-          <motion.div
-            key="waiting"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex-1 flex flex-col items-center justify-center p-8 text-center"
-          >
-            <div className="relative">
-              <div className="w-24 h-24 border-8 border-white/10 border-t-indigo-500 rounded-full animate-spin mb-10" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-12 h-12 bg-indigo-500/20 blur-xl rounded-full animate-pulse" />
-              </div>
-            </div>
-            <h1 className="text-4xl font-black text-white mb-2">{t('play.waiting')}</h1>
-            <p className="text-white/40 font-bold uppercase tracking-widest text-xs">{t('play.tensionBuilding')}</p>
-          </motion.div>
+          <PlayWaiting t={t} />
         )}
 
         {gameState === 'question' && hasAnswered && answerResult && (
-          <motion.div
-            key="result"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 1.1 }}
-            className={`flex-1 flex flex-col items-center justify-center p-8 text-center text-white relative ${answerResult.isCorrect ? 'bg-emerald-600' : 'bg-rose-600'}`}
-          >
-            {/* Feedback Loops */}
-            {answerResult.isCorrect && (
-              <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute inset-0 bg-white/20 animate-pulse" />
-              </div>
-            )}
-            {!answerResult.isCorrect && (
-              <motion.div
-                animate={{ x: [-10, 10, -10, 10, 0] }}
-                transition={{ duration: 0.4 }}
-                className="absolute inset-0 pointer-events-none bg-black/20"
-              />
-            )}
-
-            <motion.h1
-              initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              className="text-7xl font-black mb-6 drop-shadow-2xl"
-            >
-              {answerResult.isCorrect ? t('play.correctFeedback') : t('play.incorrectFeedback')}
-            </motion.h1>
-
-            <motion.div
-              animate={{ rotate: answerResult.isCorrect ? [0, 10, -10, 0] : [0, -5, 5, 0] }}
-              transition={{ duration: 0.5 }}
-              className="text-9xl mb-10 drop-shadow-2xl"
-            >
-              {avatar}
-            </motion.div>
-
-            <div className="bg-black/30 backdrop-blur-md border border-white/10 px-10 py-6 rounded-[2.5rem] mb-6 w-full max-w-xs shadow-2xl">
-              <p className="text-xs font-black uppercase tracking-[0.3em] opacity-50 mb-2">{t('play.totalScore')}</p>
-              <p className="text-6xl font-black">{answerResult.score}</p>
-            </div>
-
-            {answerResult.isCorrect && answerResult.lastPointsEarned !== undefined && (
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="flex flex-col gap-4"
-              >
-                <div className="text-3xl font-black bg-white/20 backdrop-blur-sm px-8 py-3 rounded-2xl border border-white/20">
-                  +{answerResult.lastPointsEarned}
-                </div>
-                {answerResult.streak >= 2 && (
-                  <motion.div
-                    animate={{ scale: [1, 1.1, 1] }}
-                    transition={{ duration: 1, repeat: Infinity }}
-                    className="bg-orange-500 text-white px-8 py-3 rounded-full font-black text-xl shadow-[0_0_20px_rgba(249,115,22,0.5)] flex items-center justify-center gap-3"
-                  >
-                    <span>🔥</span> {answerResult.streak} {t('play.streakFeedback')}
-                  </motion.div>
-                )}
-              </motion.div>
-            )}
-
-            {!answerResult.isCorrect && (
-              <p className="text-2xl font-black mt-8 opacity-60 uppercase tracking-widest">
-                {t('play.keepGoing')}
-              </p>
-            )}
-          </motion.div>
+          <PlayAnswerResult answerResult={answerResult} avatar={avatar} t={t} />
         )}
 
         {gameState === 'leaderboard' && (
-          <motion.div
-            key="leaderboard-wait"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="flex-1 flex flex-col items-center justify-center p-8 text-center"
-          >
-            <div className="bg-white/10 backdrop-blur-xl p-12 rounded-[3rem] border border-white/20 shadow-2xl w-full max-w-sm">
-              <h1 className="text-4xl font-black text-white mb-8">
-                {score > 0 ? t('play.climbing') : t('play.readyForNext')}
-              </h1>
-              <div className="text-8xl mb-10 drop-shadow-2xl animate-bounce">{avatar}</div>
-              <div className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl mb-8">
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-2">{t('play.currentScore')}</p>
-                <p className="text-5xl font-black text-white">{score}</p>
-              </div>
-              <p className="text-xs font-black uppercase tracking-[0.4em] text-indigo-400 animate-pulse">{t('play.lookAtBigScreen')}</p>
-            </div>
-          </motion.div>
+          <PlayLeaderboardWait score={score} avatar={avatar} t={t} />
         )}
 
         {gameState === 'podium' && (
-          <motion.div
-            key="podium-result"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex-1 flex flex-col items-center justify-center p-8 text-center"
-          >
-            <div className="bg-white/10 backdrop-blur-xl p-12 rounded-[3.5rem] border border-white/20 shadow-2xl w-full max-w-md relative overflow-hidden">
-              {/* Decorative inner glow */}
-              <div className="absolute -top-24 -left-24 w-48 h-48 bg-indigo-500/30 blur-3xl rounded-full pointer-events-none" />
-
-              <h1 className="text-5xl font-black text-white mb-4 uppercase tracking-tighter">{t('play.gameOver')}</h1>
-
-              <motion.div
-                animate={{ rotate: [0, 5, -5, 0] }}
-                transition={{ duration: 4, repeat: Infinity }}
-                className="text-9xl mb-8 drop-shadow-2xl"
-              >
-                {avatar}
-              </motion.div>
-
-              <div className="bg-white text-indigo-900 px-12 py-10 rounded-[2.5rem] shadow-2xl my-8 transform hover:scale-105 transition-transform">
-                <p className="text-sm font-black uppercase tracking-[0.3em] opacity-40 mb-2">{t('play.finalRank')}</p>
-                <p className="text-9xl font-black leading-none">
-                  {finalRank}
-                  <span className="text-4xl align-top ml-1">
-                    {finalRank === 1 ? t('play.rank.st') : finalRank === 2 ? t('play.rank.nd') : finalRank === 3 ? t('play.rank.rd') : t('play.rank.th')}
-                  </span>
-                </p>
-              </div>
-
-              <div className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl mb-10">
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-1">{t('play.finalScore')}</p>
-                <p className="text-5xl font-black text-white">{score}</p>
-              </div>
-
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => {
-                  resetGame();
-                  router.push('/');
-                }}
-                className="w-full bg-indigo-600 text-white px-10 py-6 rounded-2xl font-black text-2xl shadow-[0_0_20px_rgba(79,70,229,0.4)] hover:bg-indigo-500 transition-all uppercase tracking-widest"
-              >
-                {t('play.playAgain')}
-              </motion.button>
-            </div>
-          </motion.div>
+          <PlayPodium
+            finalRank={finalRank}
+            score={score}
+            avatar={avatar}
+            onPlayAgain={() => {
+              resetGame();
+              router.push('/');
+            }}
+            t={t}
+          />
         )}
       </AnimatePresence>
-
-      {/* Audio Blocked Indicator */}
-      <AnimatePresence>
-        {isAudioBlocked && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="fixed bottom-12 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
-          >
-            <div className="bg-indigo-600/80 backdrop-blur-xl border border-white/20 px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3">
-              <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
-              <span className="text-white font-black text-xs uppercase tracking-widest">{t('play.clickToEnableSound')}</span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <PlayAudioBlockedIndicator isAudioBlocked={isAudioBlocked} t={t} />
     </div>
   );
 }
