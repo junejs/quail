@@ -234,21 +234,36 @@ export default function HostPage() {
                   <div>
                     <h2 className="text-sm font-black text-white/40 uppercase tracking-[0.3em] mb-2">{t('host.joinAt')}</h2>
                     <div className="flex items-center gap-8">
-                      <motion.h1
-                        animate={{ scale: [1, 1.05, 1] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                        className="text-9xl font-black tracking-tighter text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]"
-                      >
-                        {pin}
-                      </motion.h1>
+                      <div className="relative group">
+                        <motion.h1
+                          animate={{ scale: [1, 1.02, 1] }}
+                          transition={{ duration: 2, repeat: Infinity }}
+                          className="text-9xl font-black tracking-tighter text-white drop-shadow-[0_0_30px_rgba(99,102,241,0.5)] relative z-10"
+                        >
+                          {pin}
+                        </motion.h1>
+                        {/* Scanning line effect */}
+                        <motion.div
+                          animate={{ top: ['0%', '100%', '0%'] }}
+                          transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                          className="absolute left-0 right-0 h-1 bg-indigo-500/50 blur-[2px] z-20 pointer-events-none"
+                        />
+                        <div className="absolute inset-0 bg-indigo-500/10 blur-2xl rounded-full -z-10 group-hover:bg-indigo-500/20 transition-colors" />
+                      </div>
                       <button
                         onClick={() => setShowQR(!showQR)}
-                        className={`p-5 rounded-3xl transition-all flex items-center gap-3 font-black uppercase tracking-widest text-sm border ${showQR ? 'bg-white text-indigo-900 border-white shadow-[0_0_30px_rgba(255,255,255,0.4)]' : 'bg-white/5 text-white border-white/10 hover:bg-white/10'
+                        className={`p-5 rounded-3xl transition-all flex items-center gap-3 font-black uppercase tracking-widest text-sm border relative overflow-hidden ${showQR ? 'bg-white text-indigo-900 border-white shadow-[0_0_30px_rgba(255,255,255,0.4)]' : 'bg-white/5 text-white border-white/10 hover:bg-white/10'
                           }`}
                         title={t('host.scanToJoin')}
                       >
-                        <QrCode size={24} />
-                        <span>{t('host.scanToJoin')}</span>
+                        <QrCode size={24} className="relative z-10" />
+                        <span className="relative z-10">{t('host.scanToJoin')}</span>
+                        {showQR && (
+                          <motion.div
+                            layoutId="qr-active-bg"
+                            className="absolute inset-0 bg-white"
+                          />
+                        )}
                       </button>
                     </div>
                     <div className="mt-6 flex items-center gap-3">

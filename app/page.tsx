@@ -233,9 +233,31 @@ function HomeContent() {
             initial={{ letterSpacing: "0.2em", opacity: 0 }}
             animate={{ letterSpacing: "-0.05em", opacity: 1 }}
             transition={{ duration: 1, ease: "easeOut" }}
-            className="text-7xl font-black text-white mb-2 drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]"
+            className="text-7xl font-black text-white mb-2 drop-shadow-[0_0_15px_rgba(99,102,241,0.5)] relative group"
           >
             quail
+            <motion.span
+              animate={{
+                opacity: [0, 1, 0],
+                x: [-2, 2, -2],
+                skewX: [-10, 10, -10]
+              }}
+              transition={{ duration: 0.2, repeat: Infinity, repeatDelay: 3 }}
+              className="absolute inset-0 text-indigo-500/30 blur-[2px] pointer-events-none select-none"
+            >
+              quail
+            </motion.span>
+            <motion.span
+              animate={{
+                opacity: [0, 0.8, 0],
+                x: [2, -2, 2],
+                skewX: [10, -10, 10]
+              }}
+              transition={{ duration: 0.2, repeat: Infinity, repeatDelay: 2.5 }}
+              className="absolute inset-0 text-rose-500/30 blur-[2px] pointer-events-none select-none"
+            >
+              quail
+            </motion.span>
           </motion.h1>
           <p className="text-indigo-200/60 font-medium tracking-widest uppercase text-[10px] mb-10">{t('home.subtitle')}</p>
 
@@ -281,9 +303,15 @@ function HomeContent() {
                 <button
                   type="submit"
                   disabled={!isConnected || isJoining}
-                  className="w-full bg-indigo-600 text-white font-black text-2xl p-5 rounded-2xl hover:bg-indigo-500 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 shadow-[0_0_20px_rgba(79,70,229,0.4)]"
+                  className="group relative w-full bg-indigo-600 text-white font-black text-2xl p-5 rounded-2xl hover:bg-indigo-500 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 shadow-[0_0_20px_rgba(79,70,229,0.4)] overflow-hidden"
                 >
-                  {isJoining ? t('home.joining') : t('home.joinGame')}
+                  <span className="relative z-10">{isJoining ? t('home.joining') : t('home.joinGame')}</span>
+                  {/* Button shine effect */}
+                  <motion.div
+                    animate={{ x: ['-100%', '200%'] }}
+                    transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 1, ease: "linear" }}
+                    className="absolute top-0 left-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-20deg] pointer-events-none"
+                  />
                 </button>
               </form>
 
@@ -356,10 +384,16 @@ function HomeContent() {
               <button
                 onClick={handleHostGame}
                 disabled={!selectedQuiz}
-                className="w-full flex items-center justify-center gap-3 p-5 bg-indigo-600 rounded-2xl text-white hover:bg-indigo-500 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_20px_rgba(79,70,229,0.4)] disabled:opacity-50"
+                className="group relative w-full flex items-center justify-center gap-3 p-5 bg-indigo-600 rounded-2xl text-white hover:bg-indigo-500 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_20px_rgba(79,70,229,0.4)] disabled:opacity-50 overflow-hidden"
               >
                 <Play size={24} fill="currentColor" />
-                <span className="font-black text-lg uppercase tracking-wider">{t('home.startLobby')}</span>
+                <span className="font-black text-lg uppercase tracking-wider relative z-10">{t('home.startLobby')}</span>
+                {/* Button shine effect */}
+                <motion.div
+                  animate={{ x: ['-100%', '200%'] }}
+                  transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 1.5, ease: "linear" }}
+                  className="absolute top-0 left-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-20deg] pointer-events-none"
+                />
               </button>
 
               <button

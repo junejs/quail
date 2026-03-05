@@ -147,6 +147,7 @@ export default function PlayPage() {
 
   const handleAvatarChange = (newAvatar: string) => {
     if (!socket || !pin) return;
+    audioManager?.playSfx('join'); // Play join sfx on selection
     setAvatar(newAvatar);
     socket.emit('change_avatar', { pin, avatar: newAvatar });
   };
@@ -183,21 +184,32 @@ export default function PlayPage() {
 
               {/* Selected Avatar Preview */}
               <div className="relative mb-8 group">
+                {/* Pedestal/Platform */}
+                <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-32 h-8 bg-indigo-500/20 blur-xl rounded-[100%] scale-x-150" />
+                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-24 h-4 bg-white/10 rounded-[100%] border border-white/20" />
+
                 <motion.div
                   key={avatar}
-                  initial={{ scale: 0.5, opacity: 0, rotate: -20 }}
-                  animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                  initial={{ scale: 0.5, opacity: 0, y: 20 }}
+                  animate={{ scale: 1, opacity: 1, y: 0 }}
                   transition={{ type: "spring", stiffness: 260, damping: 20 }}
-                  className="text-8xl sm:text-9xl drop-shadow-[0_0_30px_rgba(255,255,255,0.4)] cursor-pointer"
+                  className="text-8xl sm:text-9xl drop-shadow-[0_0_30px_rgba(255,255,255,0.4)] cursor-pointer relative z-10"
                   onClick={handleShuffleAvatar}
                 >
                   {avatar}
+                  {/* Glowing Aura */}
+                  <motion.div
+                    animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.5, 0.2] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="absolute inset-0 bg-white/20 blur-3xl rounded-full -z-10"
+                  />
                 </motion.div>
+
                 <motion.button
                   whileHover={{ scale: 1.1, rotate: 180 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={handleShuffleAvatar}
-                  className="absolute -bottom-2 -right-2 bg-indigo-500 text-white p-3 rounded-full shadow-lg border-2 border-white/20 hover:bg-indigo-400 transition-colors"
+                  className="absolute -bottom-2 -right-2 bg-indigo-500 text-white p-3 rounded-full shadow-lg border-2 border-white/20 hover:bg-indigo-400 transition-colors z-20"
                   title="Randomize"
                 >
                   <Shuffle size={20} />
@@ -226,7 +238,7 @@ export default function PlayPage() {
                   className="grid grid-cols-5 sm:grid-cols-6 gap-3 sm:gap-4 max-h-[240px] overflow-y-auto pr-2 custom-scrollbar"
                 >
                   <AnimatePresence mode="popLayout">
-                    {(AVATAR_GROUPS.find(g => g.id === activeGroupId)?.avatars || []).map((a) => (
+                    {Array.from(new Set(AVATAR_GROUPS.find(g => g.id === activeGroupId)?.avatars || [])).map((a) => (
                       <motion.button
                         key={`${activeGroupId}-${a}`}
                         layout
