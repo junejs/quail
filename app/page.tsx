@@ -98,7 +98,7 @@ function HomeContent() {
       if (isHost) {
         setPlayers(players || []);
         router.push('/host');
-      } else {
+      } else if (player) {
         setNickname(player.nickname);
         setAvatar(player.avatar);
         router.push('/play');

@@ -50,9 +50,11 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     socketInstance.on('rejoined_room', ({ player, gameState, currentQuestionIndex, quiz }) => {
       console.log('Successfully rejoined room');
       setGameState(gameState);
-      setScore(player.score);
-      setStreak(player.streak);
-      if (currentQuestionIndex >= 0 && quiz) {
+      if (player) {
+        setScore(player.score);
+        setStreak(player.streak);
+      }
+      if (currentQuestionIndex !== undefined && currentQuestionIndex >= 0 && quiz) {
         setCurrentQuestion(quiz.questions[currentQuestionIndex]);
       }
     });
