@@ -29,9 +29,9 @@ export default function PlayQuestion({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="flex-1 flex flex-col p-4 gap-4 relative"
+      className="flex flex-col h-full p-4 gap-4 relative"
     >
-      <div className={`flex-1 grid gap-4 ${question.type === 'true_false' ? 'grid-cols-1 grid-rows-2' : 'grid-cols-2 grid-rows-2'}`}>
+      <div className={`flex-1 grid gap-4 overflow-hidden ${question.type === 'true_false' ? 'grid-cols-1 grid-rows-2' : 'grid-cols-2 grid-rows-2'}`}>
         {question.options.map((opt: any, i: number) => (
           <motion.button
             key={opt.id}
@@ -40,12 +40,12 @@ export default function PlayQuestion({
             onClick={() => onToggleSelection(i)}
             className={`${opt.color} rounded-3xl shadow-xl flex items-center justify-center transition-all relative overflow-hidden group border-4 ${selectedIndexes.includes(i) ? 'border-white scale-95 shadow-[0_0_30px_rgba(255,255,255,0.5)]' : 'border-transparent'}`}
           >
-            <div className="flex flex-col items-center gap-4">
+            <div className="flex flex-col items-center gap-2 sm:gap-4">
               <div className="transform group-hover:scale-110 transition-transform">
-                {opt.shape === 'triangle' && <div className="w-0 h-0 border-l-[40px] border-r-[40px] border-b-[68px] border-l-transparent border-r-transparent border-b-white drop-shadow-lg" />}
-                {opt.shape === 'diamond' && <div className="w-20 h-20 bg-white rotate-45 shadow-lg" />}
-                {opt.shape === 'circle' && <div className="w-24 h-24 bg-white rounded-full shadow-lg" />}
-                {opt.shape === 'square' && <div className="w-24 h-24 bg-white shadow-lg" />}
+                {opt.shape === 'triangle' && <div className="w-0 h-0 border-l-[32px] border-r-[32px] border-b-[54px] sm:border-l-[40px] sm:border-r-[40px] sm:border-b-[68px] border-l-transparent border-r-transparent border-b-white drop-shadow-lg" />}
+                {opt.shape === 'diamond' && <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rotate-45 shadow-lg" />}
+                {opt.shape === 'circle' && <div className="w-20 h-20 sm:w-24 sm:h-24 bg-white rounded-full shadow-lg" />}
+                {opt.shape === 'square' && <div className="w-20 h-20 sm:w-24 sm:h-24 bg-white shadow-lg" />}
               </div>
               {question.type === 'multiple' && selectedIndexes.includes(i) && (
                 <motion.div
@@ -69,7 +69,7 @@ export default function PlayQuestion({
           whileTap={{ scale: 0.98 }}
           onClick={() => onSubmitAnswer(selectedIndexes)}
           disabled={selectedIndexes.length === 0}
-          className="bg-white text-indigo-600 font-black text-3xl py-8 rounded-[2rem] shadow-[0_0_30px_rgba(255,255,255,0.2)] disabled:opacity-50 uppercase tracking-widest"
+          className="flex-none bg-white text-indigo-600 font-black text-2xl sm:text-3xl py-4 sm:py-6 rounded-[2rem] shadow-[0_0_30px_rgba(255,255,255,0.2)] disabled:opacity-50 uppercase tracking-widest"
         >
           {t('play.submitAnswer')}
         </motion.button>

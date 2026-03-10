@@ -178,7 +178,7 @@ export default function PlayPage() {
   if (isHost || !selectedQuiz) return null;
 
   return (
-    <div className="min-h-screen flex flex-col font-sans relative overflow-hidden">
+    <div className="h-screen flex flex-col font-sans relative overflow-hidden">
       <AnimatePresence mode="wait">
         {gameState === 'lobby' && (
           <PlayLobby
