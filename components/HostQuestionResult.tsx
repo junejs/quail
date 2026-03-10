@@ -25,9 +25,9 @@ export default function HostQuestionResult({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="flex-1 flex flex-col p-12 items-center"
+      className="h-screen flex flex-col p-12 items-center overflow-hidden"
     >
-      <div className="w-full max-w-6xl flex justify-between items-center mb-16">
+      <div className="w-full max-w-6xl flex justify-between items-center mb-12 flex-shrink-0">
         <h1 className="text-6xl font-black text-white uppercase tracking-tighter">{t('host.results')}</h1>
         <motion.button
           whileHover={{ scale: 1.05 }}
@@ -39,13 +39,13 @@ export default function HostQuestionResult({
         </motion.button>
       </div>
 
-      <div className="bg-white/10 backdrop-blur-xl rounded-[3rem] p-12 border border-white/20 shadow-2xl text-center mb-16 w-full max-w-6xl">
+      <div className="bg-white/10 backdrop-blur-xl rounded-[3rem] p-12 border border-white/20 shadow-2xl text-center mb-12 w-full max-w-6xl flex-shrink-0">
         <h1 className="text-4xl font-black text-white leading-tight">
           {question.text}
         </h1>
       </div>
 
-      <div className="flex items-end justify-center gap-10 h-80 w-full max-w-6xl px-12">
+      <div className="flex items-end justify-center gap-10 h-64 w-full max-w-6xl px-12 flex-shrink-0">
         {question.options.map((opt: any, i: number) => {
           const count = answerCounts[i] || 0;
           const heightPercentage = (count / total) * 100;
@@ -82,19 +82,29 @@ export default function HostQuestionResult({
         })}
       </div>
 
-      {question.explanation && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="mt-16 w-full max-w-6xl bg-white/5 backdrop-blur-md border border-white/10 p-10 rounded-[2.5rem] shadow-2xl"
-        >
-          <h3 className="text-indigo-400 font-black uppercase tracking-[0.4em] text-xs mb-3">{t('host.explanation')}</h3>
-          <p className="text-2xl font-bold text-white leading-relaxed">
-            {question.explanation}
-          </p>
-        </motion.div>
-      )}
+      <div className="flex-1 w-full max-w-6xl flex items-end pb-8">
+        {question.explanation && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="w-full bg-white/5 backdrop-blur-md border border-white/10 px-10 py-6 rounded-[2.5rem] shadow-2xl"
+          >
+            <h3 className="text-indigo-400 font-black uppercase tracking-[0.4em] text-xs mb-3">{t('host.explanation')}</h3>
+            <p
+              className="text-white leading-relaxed font-bold overflow-hidden"
+              style={{
+                fontSize: 'clamp(1rem, 1.5vw, 1.5rem)',
+                display: '-webkit-box',
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: 'vertical',
+              }}
+            >
+              {question.explanation}
+            </p>
+          </motion.div>
+        )}
+      </div>
     </motion.div>
   );
 }
