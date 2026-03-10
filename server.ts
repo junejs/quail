@@ -514,8 +514,7 @@ io.on('connection', (socket) => {
         .sort((a, b) => {
           if (b.score !== a.score) return b.score - a.score;
           return a.totalResponseTime - b.totalResponseTime; // Tie-breaker: lower time is better
-        })
-        .slice(0, 5);
+        }).slice(0, 10);
       io.to(pin).emit('leaderboard_updated', leaderboard);
     }
   });
