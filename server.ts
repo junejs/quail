@@ -430,7 +430,7 @@ io.on('connection', (socket) => {
   // Player submits answer
   socket.on('submit_answer', ({ pin, answerIndexes }) => {
     const room = rooms[pin];
-    if (!room || room.state !== 'question') return;
+    if (!room || room.state !== 'question' || room.isPaused) return;
 
     const player = room.players[socket.id];
     if (!player || player.hasAnswered) return;
