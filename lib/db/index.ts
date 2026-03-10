@@ -495,11 +495,13 @@ export async function getAllQuizzes() {
 
 export async function saveGameResult(result: { quiz_id: string; quiz_title: string; pin: string; standings: any[] }) {
   const database = await getDb();
+  const id = crypto.randomUUID();
 
   const currentDbType = getDbType();
   if (currentDbType === 'pglite' || currentDbType === 'postgresql') {
     await database.insert(schema.pgGameResults)
       .values({
+        id,
         quizId: result.quiz_id,
         quizTitle: result.quiz_title,
         pin: result.pin,
@@ -509,6 +511,7 @@ export async function saveGameResult(result: { quiz_id: string; quiz_title: stri
     // MySQL
     await database.insert(schema.mysqlGameResults)
       .values({
+        id,
         quizId: result.quiz_id,
         quizTitle: result.quiz_title,
         pin: result.pin,
