@@ -3,7 +3,11 @@
     "allow": [
       "Bash(head:*)",
       "Bash(npm run:*)",
-      "Bash(lsof:*)"
+      "Bash(lsof:*)",
+      "Bash(npm install:*)",
+      "Bash(chmod +x:*)",
+      "Bash(node:*)",
+      "Bash(git remote:*)"
     ]
   }
 }

@@ -145,6 +145,54 @@ npm run dev
 4. **Answer Questions**: Players answer on their devices while host displays on big screen
 5. **See Results**: Live leaderboard updates after each question
 
+## Testing
+
+### Load Testing with Mock Players
+
+Quail includes a load testing tool that simulates multiple bot players for local testing.
+
+#### Usage
+
+```bash
+# Terminal 1: Start the server
+npm run dev
+
+# Terminal 2: Create a game at http://localhost:3000/host and note the Game PIN
+
+# Terminal 3: Run mock players (replace 123456 with your actual PIN)
+npm run mock-players -- --pin=123456 --count=30
+```
+
+#### Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--pin` | Game PIN to join | **(required)** |
+| `--count` | Number of bot players (1-100) | `30` |
+| `--url` | Server URL | `http://localhost:3000` |
+
+#### Examples
+
+```bash
+# Simulate 20 players
+npm run mock-players -- --pin=123456 --count=20
+
+# Simulate 50 players
+npm run mock-players -- --pin=123456 --count=50
+
+# Connect to a different server
+node mockplayer/load-test-players.js --pin=123456 --count=30 --url=http://192.168.1.100:3000
+```
+
+#### Bot Behavior
+
+- ✅ Join with random English names (James, Mary, Robert, ...)
+- ✅ Answer questions in random time (0.5-10 seconds)
+- ✅ Select random answer options
+- ✅ Real-time statistics display
+
+For more details, see [mockplayer/README.md](mockplayer/README.md).
+
 ## Project Structure
 
 ```
