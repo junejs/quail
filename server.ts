@@ -2,7 +2,18 @@ import { createServer } from 'http';
 import { parse } from 'url';
 import next from 'next';
 import { Server } from 'socket.io';
-import { getDb, saveQuiz, getAllQuizzes, saveGameResult, getGameResults } from './lib/db';
+import {
+  getDb,
+  saveQuiz,
+  getAllQuizzes,
+  saveGameResult,
+  getGameResults,
+  generateUniquePin,
+  registerActiveGame,
+  removeActiveGame,
+  updateGameHeartbeat,
+  cleanupExpiredGames
+} from './lib/db';
 import jwt from 'jsonwebtoken';
 import { serialize, parse as parseCookie } from 'cookie';
 import { authenticateLDAP } from './lib/ldap';
@@ -62,9 +73,8 @@ const rooms: Record<string, Room> = {};
 const JWT_SECRET = process.env.JWT_SECRET || 'quail-secret-key';
 const LDAP_ENABLED = process.env.NEXT_PUBLIC_LDAP_ENABLED === 'true';
 
-function generatePin() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
+// Heartbeat intervals for each active game
+const heartbeatIntervals: Record<string, NodeJS.Timeout> = {};
 
 const server = createServer(async (req, res) => {
   try {
@@ -204,23 +214,50 @@ io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
 
   // Host creates a room
-  socket.on('create_room', ({ quiz, sessionId }) => {
-    const pin = generatePin();
-    rooms[pin] = {
-      pin,
-      hostId: socket.id,
-      hostSessionId: sessionId,
-      players: {},
-      state: 'lobby',
-      currentQuestionIndex: -1,
-      questionStartTime: 0,
-      answers: {},
-      quiz,
-      isPaused: false,
-      pausedTimeRemaining: 0,
-    };
-    socket.join(pin);
-    socket.emit('room_created', pin);
+  socket.on('create_room', async ({ quiz, sessionId }) => {
+    try {
+      // Generate a unique 4-digit PIN using database
+      const pin = await generateUniquePin();
+
+      // Register the active game in database
+      await registerActiveGame({
+        pin,
+        hostId: socket.id,
+        hostSessionId: sessionId,
+        quizId: quiz.id
+      });
+
+      rooms[pin] = {
+        pin,
+        hostId: socket.id,
+        hostSessionId: sessionId,
+        players: {},
+        state: 'lobby',
+        currentQuestionIndex: -1,
+        questionStartTime: 0,
+        answers: {},
+        quiz,
+        isPaused: false,
+        pausedTimeRemaining: 0,
+      };
+      socket.join(pin);
+      socket.emit('room_created', pin);
+
+      // Set up heartbeat for this game (every 30 seconds)
+      heartbeatIntervals[pin] = setInterval(async () => {
+        if (rooms[pin]) {
+          await updateGameHeartbeat(pin);
+        } else {
+          // Game no longer exists, clear interval
+          clearInterval(heartbeatIntervals[pin]);
+          delete heartbeatIntervals[pin];
+        }
+      }, 30000);
+
+    } catch (error) {
+      console.error('Failed to create room:', error);
+      socket.emit('error', 'Failed to create room. Please try again.');
+    }
   });
 
   // Player joins a room
@@ -526,7 +563,7 @@ io.on('connection', (socket) => {
       room.state = 'podium';
       const finalStandings = Object.values(room.players)
         .sort((a, b) => b.score - a.score);
-      
+
       // Save game result to DB
       try {
         await saveGameResult({
@@ -540,10 +577,22 @@ io.on('connection', (socket) => {
       }
 
       io.to(pin).emit('game_ended', finalStandings);
+
+      // Remove from active games database
+      try {
+        await removeActiveGame(pin);
+        // Clear heartbeat interval
+        if (heartbeatIntervals[pin]) {
+          clearInterval(heartbeatIntervals[pin]);
+          delete heartbeatIntervals[pin];
+        }
+      } catch (err) {
+        console.error('Failed to remove active game:', err);
+      }
     }
   });
 
-  socket.on('disconnect', () => {
+  socket.on('disconnect', async () => {
     console.log('Client disconnected:', socket.id);
     // Handle player disconnect
     for (const pin in rooms) {
@@ -556,17 +605,38 @@ io.on('connection', (socket) => {
       }
       // If host disconnects, end the room after a short delay
       if (room.hostId === socket.id) {
-        setTimeout(() => {
+        setTimeout(async () => {
           // Check if host reconnected (id might have changed)
           if (rooms[pin] && rooms[pin].hostId === socket.id) {
             io.to(pin).emit('host_disconnected');
             delete rooms[pin];
+            // Remove from database and clear heartbeat
+            await removeActiveGame(pin);
+            if (heartbeatIntervals[pin]) {
+              clearInterval(heartbeatIntervals[pin]);
+              delete heartbeatIntervals[pin];
+            }
           }
         }, 5000);
       }
     }
   });
 });
+
+// Clean up expired games on startup
+cleanupExpiredGames().then(count => {
+  if (count > 0) {
+    console.log(`> Cleaned up ${count} expired games from database`);
+  }
+});
+
+// Periodically clean up expired games (every 5 minutes)
+setInterval(async () => {
+  const count = await cleanupExpiredGames();
+  if (count > 0) {
+    console.log(`> Cleaned up ${count} expired games from database`);
+  }
+}, 300000);
 
 server.listen(port, hostname, () => {
   console.log(`> Ready on http://${hostname}:${port}`);
