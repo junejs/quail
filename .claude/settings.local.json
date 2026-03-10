@@ -18,7 +18,8 @@
       "Bash(npx tsx:*)",
       "Bash(sleep 2:*)",
       "Bash(pkill:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(curl:*)"
     ]
   }
 }
