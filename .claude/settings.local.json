@@ -8,7 +8,17 @@
       "Bash(chmod +x:*)",
       "Bash(node:*)",
       "Bash(git remote:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "WebSearch",
+      "Bash(npm uninstall:*)",
+      "Bash(npx tsc:*)",
+      "Bash(rm:*)",
+      "Bash(true:*)",
+      "Bash(psql:*)",
+      "Bash(npx tsx:*)",
+      "Bash(sleep 2:*)",
+      "Bash(pkill:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

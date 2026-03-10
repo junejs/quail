@@ -39,6 +39,7 @@ Quail uses a full-stack architecture designed for low-latency real-time communic
 - **Audio**: [Howler.js](https://howlerjs.com/)
 - **State Management**: [Zustand](https://github.com/pmndrs/zustand)
 - **Icons**: [Lucide React](https://lucide.dev/)
+- **Database**: [Drizzle ORM](https://orm.drizzle.team/) (supports PGlite, PostgreSQL, MySQL)
 - **Backend**: [Express](https://expressjs.com/)
 
 ## 📂 Project Structure
@@ -47,8 +48,10 @@ Quail uses a full-stack architecture designed for low-latency real-time communic
 ├── app/                # Next.js pages (Home, Host, Play, Create)
 ├── components/         # Reusable UI components & Socket Provider
 ├── lib/                # Core logic (Audio Manager, Zustand Store, Utils)
+│   └── db/             # Database schema and connection (Drizzle ORM)
 ├── hooks/              # Custom React hooks
 ├── server.ts           # Express + Socket.io Server
+├── drizzle.config.ts   # Drizzle ORM configuration
 ├── metadata.json       # App metadata & permissions
 └── audio_design.md     # Audio system design principles
 ```
@@ -88,4 +91,44 @@ Quail uses a full-stack architecture designed for low-latency real-time communic
 - **Translation Key Format**: Use dot notation (e.g., `home.title`, `play.correct`)
 - **Adding New Keys**: Always add translations to BOTH language files
 - **Language Switching**: Use `setLocale()` from `useI18nStore` to switch languages
+
+### Database
+- **ORM**: Use Drizzle ORM for all database operations (`lib/db/`)
+- **Supported Databases**: PGlite (default), PostgreSQL, MySQL
+- **Configuration**: Create `.env.local` and set `DATABASE_URL` (type auto-detected)
+- **Schema Definitions**: All table schemas are defined in `lib/db/schema.ts`
+- **Database Functions**: Import CRUD functions from `lib/db/index.ts`
+- **Type Safety**: Use Drizzle's inferred types for database records
+- **Migrations**: SQL scripts in `lib/db/migrations/` run automatically on startup
+
+#### Database Configuration
+```bash
+# Create .env.local from template
+cp .env.example .env.local
+
+# Set DATABASE_URL in .env.local
+DATABASE_URL=postgres://user:password@host:port/database
+```
+
+**Note**: Database type is auto-detected from `DATABASE_URL` protocol:
+- `postgres://` → PostgreSQL
+- `mysql://` → MySQL
+- Empty/unset → PGlite
+
+#### Database API
+```typescript
+import {
+  saveQuiz,
+  getAllQuizzes,
+  saveGameResult,
+  getGameResults,
+  generateUniquePin,
+  registerActiveGame,
+  removeActiveGame,
+  updateGameHeartbeat,
+  cleanupExpiredGames,
+  isPinActive,
+  getActiveGames,
+} from '@/lib/db';
+```
 

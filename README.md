@@ -79,6 +79,7 @@ docs/images/podium.png
 - **State Management**: Zustand
 - **Icons**: Lucide React
 - **Backend**: Express
+- **Database**: Drizzle ORM (supports PGlite, PostgreSQL, MySQL)
 - **i18n**: Zustand + JSON files
 
 ## Internationalization (i18n)
@@ -119,6 +120,105 @@ function MyComponent() {
 ├── lib/
 │   ├── i18n.ts          # Zustand store for locale state
 │   └── translations.ts  # useTranslation hook
+```
+
+## Database
+
+Quail uses **Drizzle ORM** for database operations, providing type-safe queries and multi-database support.
+
+### Supported Databases
+
+| Database | Usage | Configuration |
+|----------|-------|---------------|
+| **PGlite** | Embedded PostgreSQL (default) | Leave `DATABASE_URL` empty |
+| **PostgreSQL** | Remote PostgreSQL server | `DATABASE_URL=postgres://...` |
+| **MySQL** | Remote MySQL server | `DATABASE_URL=mysql://...` |
+
+### Configuration
+
+Create `.env.local` for local configuration (auto-loaded via dotenv):
+
+```bash
+cp .env.example .env.local
+```
+
+**Example configurations:**
+```bash
+# PGlite (default)
+DATABASE_URL=
+
+# PostgreSQL
+DATABASE_URL=postgres://user:password@host:port/database
+
+# MySQL
+DATABASE_URL=mysql://user:password@host:port/database
+```
+
+**Note:** Database type is auto-detected from `DATABASE_URL` protocol.
+
+### Database Schema
+
+Quail uses three main tables:
+
+- **`quizzes`**: Store quiz configurations (title, questions)
+- **`game_results`**: Store completed game results (standings, scores)
+- **`active_games`**: Track ongoing games (PIN, host, heartbeat)
+
+### File Structure
+
+```
+lib/db/
+├── schema.ts       # Drizzle schema definitions
+├── index.ts        # Database connection & CRUD functions
+└── migrations/     # Database migration files
+```
+
+### Migrations
+
+Generate and run migrations:
+
+```bash
+# Generate migration from schema changes
+npx drizzle-kit generate
+
+# Push schema directly to database (for development)
+npx drizzle-kit push
+
+# Open Drizzle Studio (database GUI)
+npx drizzle-kit studio
+```
+
+### API Reference
+
+```typescript
+import {
+  saveQuiz,
+  getAllQuizzes,
+  saveGameResult,
+  getGameResults,
+  generateUniquePin,
+  registerActiveGame,
+  removeActiveGame,
+  updateGameHeartbeat,
+  cleanupExpiredGames,
+  isPinActive,
+  getActiveGames,
+} from '@/lib/db';
+
+// Quiz operations
+await saveQuiz({ id: 'quiz-1', title: 'My Quiz', questions: [...] });
+const quizzes = await getAllQuizzes();
+
+// Game result operations
+await saveGameResult({ quiz_id: 'quiz-1', quiz_title: 'My Quiz', pin: '1234', standings: [...] });
+const results = await getGameResults();
+
+// Active game operations
+const pin = await generateUniquePin();
+await registerActiveGame({ pin, hostId: '...', hostSessionId: '...', quizId: '...' });
+await updateGameHeartbeat(pin);
+await removeActiveGame(pin);
+await cleanupExpiredGames();
 ```
 
 ## Getting Started
@@ -199,8 +299,10 @@ For more details, see [mockplayer/README.md](mockplayer/README.md).
 ├── app/                # Next.js pages (Home, Host, Play, Create)
 ├── components/         # Reusable UI components & Socket Provider
 ├── lib/                # Core logic (Audio Manager, Zustand Store, Utils)
+│   └── db/             # Database schema and connection (Drizzle ORM)
 ├── hooks/              # Custom React hooks
 ├── server.ts           # Express + Socket.io Server
+├── drizzle.config.ts   # Drizzle ORM configuration
 └── audio_design.md     # Audio system design principles
 ```
 

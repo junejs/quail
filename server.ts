@@ -1,3 +1,12 @@
+// Load environment variables from .env files
+import dotenv from 'dotenv';
+import { resolve } from 'path';
+
+// Load .env.local first, then fall back to .env
+const envPath = resolve(process.cwd(), '.env.local');
+dotenv.config({ path: envPath });
+dotenv.config(); // Also load .env for default values
+
 import { createServer } from 'http';
 import { parse } from 'url';
 import next from 'next';
