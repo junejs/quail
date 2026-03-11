@@ -13,8 +13,8 @@ rm -rf $DIST_DIR $RELEASE_FILE .next
 
 # 2. 安装依赖并构建 Next.js
 echo "📦 安装依赖并执行 Next.js 构建..."
-pnpm install
-pnpm build
+npm install
+npm run build
 
 # 3. 创建输出目录
 echo "📂 准备分发目录..."
