@@ -68,9 +68,17 @@ let client: any = null;
  * Get the migrations directory path for the current database type
  */
 function getMigrationsDir(): string {
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = join(__filename, '..');
-  const migrationsDir = join(__dirname, 'migrations');
+  let baseDir: string;
+  try {
+    // ESM
+    const __filename = fileURLToPath(import.meta.url);
+    baseDir = join(__filename, '..');
+  } catch (e) {
+    // CJS (Fallback for bundled code)
+    baseDir = __dirname;
+  }
+  
+  const migrationsDir = join(baseDir, 'migrations');
 
   // PGlite and PostgreSQL use the same SQL scripts
   const dbFolder = getDbType() === 'mysql' ? 'mysql' : 'pglite';
