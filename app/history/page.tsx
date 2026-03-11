@@ -18,15 +18,15 @@ export default function HistoryPage() {
     fetchResults();
   }, [fetchResults]);
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
+  const formatDate = (date: Date | string) => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
     return new Intl.DateTimeFormat(t('language.en') === 'English' ? 'en-US' : 'zh-CN', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-    }).format(date);
+    }).format(dateObj);
   };
 
   return (
@@ -68,11 +68,11 @@ export default function HistoryPage() {
                     className="w-full text-left p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-zinc-50 transition-colors"
                   >
                     <div className="flex-1">
-                      <h3 className="text-xl font-bold text-zinc-900 mb-1">{result.quiz_title}</h3>
+                      <h3 className="text-xl font-bold text-zinc-900 mb-1">{result.quizTitle}</h3>
                       <div className="flex flex-wrap gap-4 text-sm text-zinc-500 font-medium">
                         <span className="flex items-center gap-1.5">
                           <Calendar size={14} />
-                          {formatDate(result.played_at)}
+                          {formatDate(result.playedAt)}
                         </span>
                         <span className="flex items-center gap-1.5">
                           <Hash size={14} />

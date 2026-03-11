@@ -27,6 +27,7 @@ import jwt from 'jsonwebtoken';
 import { serialize, parse as parseCookie } from 'cookie';
 import { authenticateLDAP } from './lib/ldap';
 import { AVATARS } from './lib/constants';
+import type { Quiz, Player } from './lib/types';
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = '0.0.0.0';
@@ -42,23 +43,6 @@ app.prepare().then(() => {
 });
 
 // Types
-interface Player {
-  id: string;
-  sessionId: string;
-  nickname: string;
-  avatar: string;
-  score: number;
-  streak: number;
-  scoreHistory: number[];
-  hasAnswered: boolean;
-  lastAnswerCorrect: boolean;
-  totalResponseTime: number; // For tie-breaking
-  lastPointsEarned?: number;
-  lastSpeedBonus?: number;
-  lastStreakBonus?: number;
-  isDisconnected: boolean;
-}
-
 function getRandomAvatar() {
   return AVATARS[Math.floor(Math.random() * AVATARS.length)];
 }
@@ -72,7 +56,7 @@ interface Room {
   currentQuestionIndex: number;
   questionStartTime: number;
   answers: Record<string, number>; // playerId -> optionIndex
-  quiz: any;
+  quiz: Quiz;
   isPaused: boolean;
   pausedTimeRemaining: number; // Store time left when paused
 }

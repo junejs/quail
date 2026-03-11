@@ -1,34 +1,19 @@
 import { create } from 'zustand';
+import type { Quiz, Question, Player, GameResult, GameState } from './types';
 
-export interface Question {
-  id: number;
-  text: string;
-  type: 'single' | 'true_false' | 'multiple';
-  timeLimit: number;
-  options: { id: number; text: string; color: string; shape: string }[];
-  correctAnswerIndexes: number[]; // Changed from correctAnswerIndex to support multiple
-  explanation?: string;
-}
-
-export interface Quiz {
-  id: string;
-  title: string;
-  questions: Question[];
-}
-
-interface GameState {
+interface GameStore {
   pin: string | null;
   nickname: string | null;
   avatar: string | null;
   sessionId: string | null;
   isHost: boolean;
-  gameState: 'idle' | 'lobby' | 'question' | 'question_result' | 'leaderboard' | 'podium';
-  players: any[];
-  currentQuestion: any | null;
+  gameState: GameState;
+  players: Player[];
+  currentQuestion: Question | null;
   score: number;
   streak: number;
   quizzes: Quiz[];
-  gameResults: any[];
+  gameResults: GameResult[];
   selectedQuiz: Quiz | null;
   isAuthenticated: boolean;
   ldapEnabled: boolean;
@@ -37,9 +22,9 @@ interface GameState {
   setAvatar: (avatar: string | null) => void;
   setSessionId: (id: string | null) => void;
   setIsHost: (isHost: boolean) => void;
-  setGameState: (state: 'idle' | 'lobby' | 'question' | 'question_result' | 'leaderboard' | 'podium') => void;
-  setPlayers: (players: any[]) => void;
-  setCurrentQuestion: (question: any | null) => void;
+  setGameState: (state: GameState) => void;
+  setPlayers: (players: Player[]) => void;
+  setCurrentQuestion: (question: Question | null) => void;
   setScore: (score: number) => void;
   setStreak: (streak: number) => void;
   addQuiz: (quiz: Quiz) => Promise<void>;
@@ -52,7 +37,7 @@ interface GameState {
   hydrate: () => void;
 }
 
-export const useGameStore = create<GameState>((set, get) => ({
+export const useGameStore = create<GameStore>((set, get) => ({
   pin: null,
   nickname: null,
   avatar: null,
@@ -177,3 +162,6 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   }
 }));
+
+// Re-export types for backwards compatibility
+export type { Quiz, Question, Player, GameResult, GameState } from './types';

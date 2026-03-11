@@ -1,4 +1,5 @@
 import { Howl, Howler } from 'howler';
+import { showWarning } from './error-handler';
 
 export const AUDIO_ASSETS = {
   lobby: '/audio/lobby.mp3',
@@ -50,14 +51,31 @@ class AudioManager {
           },
           onloaderror: (id, error) => {
             console.error(`Failed to load audio: ${key} (${url})`, error);
+            // Only show warning for critical sounds (not BGM)
+            if (key === 'correct' || key === 'incorrect' || key === 'join') {
+              showWarning(
+                'Audio Error',
+                `Failed to load sound effect: ${key}. Game sounds may not work properly.`,
+                3000
+              );
+            }
           },
           onplayerror: (id, error) => {
             // Silence common autoplay errors but log others
-            if (typeof error === 'string' && error.includes('interaction')) {
+            const errorStr = typeof error === 'string' ? error : String(error);
+            if (errorStr.includes('interaction')) {
               console.warn(`Autoplay blocked for ${key}, queued for next interaction.`);
               this.queuedBgm = key;
             } else {
               console.error(`Failed to play audio: ${key}`, error);
+              // Only show warning for critical sounds
+              if (key === 'correct' || key === 'incorrect') {
+                showWarning(
+                  'Audio Playback Error',
+                  `Failed to play sound: ${key}. Please check your audio settings.`,
+                  3000
+                );
+              }
             }
 
             // Try to resume context and play again if possible
@@ -65,7 +83,9 @@ class AudioManager {
               if (this.sounds.get(key) && !this.sounds.get(key)?.playing()) {
                 this.sounds.get(key)?.play();
               }
-            }).catch(() => {});
+            }).catch((err) => {
+              console.error('Failed to resume audio context:', err);
+            });
           }
         }));
       });
@@ -98,7 +118,9 @@ class AudioManager {
       try {
         await Howler.ctx.resume();
       } catch (e) {
-        console.error('Failed to resume audio context', e);
+        const error = e instanceof Error ? e : new Error(String(e));
+        console.error('Failed to resume audio context', error);
+        // Don't show notification for this - it's common and usually resolves itself
       }
     }
   }
@@ -145,13 +167,26 @@ class AudioManager {
   async playSfx(key: keyof typeof AUDIO_ASSETS) {
     console.log(`Attempting to play SFX: ${key}`);
     if (this.isMuted || !this.isUnlocked) return;
-    await this.resumeContext();
-    const sound = this.sounds.get(key);
-    if (sound) {
-      if (sound.state() === 'unloaded') {
-        sound.load();
+
+    try {
+      await this.resumeContext();
+      const sound = this.sounds.get(key);
+      if (sound) {
+        if (sound.state() === 'unloaded') {
+          sound.load();
+        }
+        sound.play();
       }
-      sound.play();
+    } catch (error) {
+      console.error(`Failed to play SFX: ${key}`, error);
+      // Show user feedback for critical errors
+      if (key === 'correct' || key === 'incorrect') {
+        showWarning(
+          'Audio Error',
+          `Could not play sound effect. Please check your audio settings.`,
+          2000
+        );
+      }
     }
   }
 

@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useGameStore } from '@/lib/store';
+import { handleSocketError, showWarning } from '@/lib/error-handler';
 
 interface SocketContextType {
   socket: Socket | null;
@@ -61,13 +62,18 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     socketInstance.on('rejoin_failed', (reason) => {
       console.warn('Rejoin failed:', reason);
+      showWarning(
+        'Session Expired',
+        'Your game session has ended. Please join again with a new PIN.',
+        5000
+      );
       // Clear session if rejoin failed
       localStorage.removeItem('quail_pin');
       localStorage.removeItem('quail_sessionId');
     });
 
     socketInstance.on('connect_error', (err) => {
-      console.error('Socket connection error:', err);
+      handleSocketError(err as Error, 'Connection');
     });
 
     socketInstance.on('disconnect', (reason) => {

@@ -1,6 +1,7 @@
 import { pgTable, text, timestamp, jsonb } from 'drizzle-orm/pg-core';
 import { mysqlTable, varchar, binary, timestamp as mysqlTimestamp, json } from 'drizzle-orm/mysql-core';
 import { sql } from 'drizzle-orm';
+import type { Question, Player } from '../types';
 
 // ============================================================================
 // PostgreSQL / PGlite Schema
@@ -9,7 +10,7 @@ import { sql } from 'drizzle-orm';
 export const pgQuizzes = pgTable('quizzes', {
   id: text('id').primaryKey(),
   title: text('title').notNull(),
-  questions: jsonb('questions').$type<any[]>().notNull(),
+  questions: jsonb('questions').$type<Question[]>().notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -18,7 +19,7 @@ export const pgGameResults = pgTable('game_results', {
   quizId: text('quiz_id').notNull(),
   quizTitle: text('quiz_title').notNull(),
   pin: text('pin').notNull(),
-  standings: jsonb('standings').$type<any[]>().notNull(),
+  standings: jsonb('standings').$type<Player[]>().notNull(),
   playedAt: timestamp('played_at').defaultNow().notNull(),
 });
 
@@ -38,7 +39,7 @@ export const pgActiveGames = pgTable('active_games', {
 export const mysqlQuizzes = mysqlTable('quizzes', {
   id: binary('id', { length: 36 }).primaryKey(),
   title: varchar('title', { length: 255 }).notNull(),
-  questions: json('questions').$type<any[]>().notNull(),
+  questions: json('questions').$type<Question[]>().notNull(),
   createdAt: mysqlTimestamp('created_at').default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
@@ -47,7 +48,7 @@ export const mysqlGameResults = mysqlTable('game_results', {
   quizId: binary('quiz_id', { length: 36 }).notNull(),
   quizTitle: varchar('quiz_title', { length: 255 }).notNull(),
   pin: varchar('pin', { length: 10 }).notNull(),
-  standings: json('standings').$type<any[]>().notNull(),
+  standings: json('standings').$type<Player[]>().notNull(),
   playedAt: mysqlTimestamp('played_at').default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
@@ -64,30 +65,10 @@ export const mysqlActiveGames = mysqlTable('active_games', {
 // Type exports
 // ============================================================================
 
-export type Quiz = {
-  id: string;
-  title: string;
-  questions: any[];
-  createdAt: Date;
-};
+import type { Quiz, GameResult, ActiveGame } from '../types';
 
-export type GameResult = {
-  id: string;
-  quizId: string;
-  quizTitle: string;
-  pin: string;
-  standings: any[];
-  playedAt: Date;
-};
-
-export type ActiveGame = {
-  pin: string;
-  hostId: string;
-  hostSessionId: string;
-  quizId: string;
-  createdAt: Date;
-  lastHeartbeat: Date;
-};
+// Re-export for backwards compatibility
+export type { Quiz, GameResult, ActiveGame };
 
 // Type inference helpers
 export type NewQuiz = Omit<Quiz, 'createdAt'>;

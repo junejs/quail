@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css'; // Global styles
-import { SocketProvider } from '@/components/socket-provider';
-import { ClientOnlyBackground } from '@/components/ClientOnlyBackground';
+import { Providers } from '@/components/Providers';
 
 export const metadata: Metadata = {
   title: 'Quail',
@@ -12,12 +11,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body suppressHydrationWarning className="bg-[#0a0502] text-white">
-        <SocketProvider>
-          <ClientOnlyBackground />
-          <div className="relative z-10">
-            {children}
-          </div>
-        </SocketProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

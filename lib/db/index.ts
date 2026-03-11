@@ -9,6 +9,8 @@ import { readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { fileURLToPath } from 'url';
 import type { Sql } from 'postgres';
+import type { Question, Player } from '../types';
+import type { ActiveGame } from './schema';
 
 // Database type configuration
 type DbType = 'pglite' | 'postgresql' | 'mysql';
@@ -279,10 +281,10 @@ async function runMigrations(): Promise<void> {
         const sql = readSqlFile(filePath);
         await executeMigration(sql, fileName);
         console.log(`> [Database]   ✓ Completed: ${fileName}`);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error(`> [Database]   ✗ Failed: ${fileName}`);
-        console.error(`> [Database]   Error: ${error.message}`);
-        if (error.code) {
+        console.error(`> [Database]   Error: ${error instanceof Error ? error.message : String(error)}`);
+        if (error && typeof error === 'object' && 'code' in error) {
           console.error(`> [Database]   Error code: ${error.code}`);
         }
         throw error;
@@ -356,8 +358,8 @@ async function initPglite() {
     console.log(`> [Database] ✓ PGlite initialization completed (${duration}s)`);
 
     return dbConnection;
-  } catch (error: any) {
-    console.error(`> [Database] ✗ PGlite initialization failed: ${error.message}`);
+  } catch (error: unknown) {
+    console.error(`> [Database] ✗ PGlite initialization failed: ${error instanceof Error ? error.message : String(error)}`);
     throw error;
   }
 }
@@ -392,8 +394,8 @@ async function initPostgreSQL() {
     console.log(`> [Database] ✓ PostgreSQL initialization completed (${duration}s)`);
 
     return dbConnection;
-  } catch (error: any) {
-    console.error(`> [Database] ✗ PostgreSQL initialization failed: ${error.message}`);
+  } catch (error: unknown) {
+    console.error(`> [Database] ✗ PostgreSQL initialization failed: ${error instanceof Error ? error.message : String(error)}`);
     console.error(`> [Database] Check your DATABASE_URL and ensure the database is accessible`);
     throw error;
   }
@@ -422,16 +424,23 @@ async function initMySQL() {
     console.log(`> [Database] ✓ MySQL initialization completed (${duration}s)`);
 
     return dbConnection;
-  } catch (error: any) {
-    console.error(`> [Database] ✗ MySQL initialization failed: ${error.message}`);
+  } catch (error: unknown) {
+    console.error(`> [Database] ✗ MySQL initialization failed: ${error instanceof Error ? error.message : String(error)}`);
     console.error(`> [Database] Check your DATABASE_URL and ensure the database is accessible`);
 
-    if (error.code === 'ECONNREFUSED') {
-      console.error(`> [Database] Connection refused - check if MySQL server is running`);
-    } else if (error.code === 'ER_ACCESS_DENIED_ERROR') {
-      console.error(`> [Database] Access denied - check your credentials`);
-    } else if (error.code === 'ER_BAD_DB_ERROR') {
-      console.error(`> [Database] Database does not exist - create it first`);
+    if (
+      error &&
+      typeof error === 'object' &&
+      'code' in error &&
+      typeof error.code === 'string'
+    ) {
+      if (error.code === 'ECONNREFUSED') {
+        console.error(`> [Database] Connection refused - check if MySQL server is running`);
+      } else if (error.code === 'ER_ACCESS_DENIED_ERROR') {
+        console.error(`> [Database] Access denied - check your credentials`);
+      } else if (error.code === 'ER_BAD_DB_ERROR') {
+        console.error(`> [Database] Database does not exist - create it first`);
+      }
     }
 
     throw error;
@@ -442,7 +451,7 @@ async function initMySQL() {
 // Quiz Operations
 // ============================================================================
 
-export async function saveQuiz(quiz: { id: string; title: string; questions: any[] }) {
+export async function saveQuiz(quiz: { id: string; title: string; questions: Question[] }) {
   const database = await getDb();
 
   const currentDbType = getDbType();
@@ -493,7 +502,7 @@ export async function getAllQuizzes() {
 // Game Results Operations
 // ============================================================================
 
-export async function saveGameResult(result: { quiz_id: string; quiz_title: string; pin: string; standings: any[] }) {
+export async function saveGameResult(result: { quiz_id: string; quiz_title: string; pin: string; standings: Player[] }) {
   const database = await getDb();
   const id = crypto.randomUUID();
 
@@ -567,9 +576,15 @@ export async function generateUniquePin(): Promise<string> {
           });
       }
       return pin;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // PIN already exists, try again
-      if (error.code === '23505' || error.code === 'ER_DUP_ENTRY' || error.message?.includes('unique')) {
+      if (
+        error &&
+        typeof error === 'object' &&
+        'code' in error &&
+        (error.code === '23505' || error.code === 'ER_DUP_ENTRY' || ('message' in error && typeof error.message === 'string' && error.message.includes('unique'))) ||
+        (error instanceof Error && error.message.includes('unique'))
+      ) {
         continue;
       }
       throw error;
@@ -707,7 +722,7 @@ export async function isPinActive(pin: string): Promise<boolean> {
 /**
  * Get all active games (for monitoring/debugging)
  */
-export async function getActiveGames(): Promise<any[]> {
+export async function getActiveGames(): Promise<ActiveGame[]> {
   const database = await getDb();
 
   const currentDbType = getDbType();

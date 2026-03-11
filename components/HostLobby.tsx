@@ -2,10 +2,12 @@ import { AnimatePresence, motion } from 'motion/react';
 import { QrCode } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { Quiz } from '@/lib/store';
+import type { Player } from '@/lib/types';
+import { memo } from 'react';
 
 type HostLobbyProps = {
   pin: string;
-  players: any[];
+  players: Player[];
   selectedQuiz: Quiz;
   showQR: boolean;
   setShowQR: (show: boolean) => void;
@@ -13,6 +15,29 @@ type HostLobbyProps = {
   onStartGame: () => void;
   t: (key: string) => string;
 };
+
+// Memoized player card component for lobby
+const PlayerCard = memo((
+  { player, t }: {
+    player: Player;
+    t: (key: string) => string;
+  }
+) => (
+  <motion.div
+    layout
+    initial={{ scale: 0, opacity: 0, y: 20 }}
+    animate={{ scale: 1, opacity: 1, y: 0 }}
+    exit={{ scale: 0, opacity: 0 }}
+    className={`bg-white/10 backdrop-blur-md px-8 py-4 rounded-2xl shadow-xl text-2xl font-black flex items-center gap-4 border transition-all ${player.isDisconnected ? 'border-rose-500/50 text-white/30 grayscale' : 'border-white/10 text-white'
+      }`}
+  >
+    <span className="text-4xl">{player.avatar}</span>
+    {player.nickname}
+    {player.isDisconnected && <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest ml-2">{t('host.offline')}</span>}
+  </motion.div>
+));
+
+PlayerCard.displayName = 'PlayerCard';
 
 export default function HostLobby({
   pin,
@@ -124,20 +149,12 @@ export default function HostLobby({
         </div>
         <div className="flex flex-wrap gap-6">
           <AnimatePresence>
-            {players.map((p) => (
-              <motion.div
-                layout
-                initial={{ scale: 0, opacity: 0, y: 20 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0, opacity: 0 }}
-                key={p.id}
-                className={`bg-white/10 backdrop-blur-md px-8 py-4 rounded-2xl shadow-xl text-2xl font-black flex items-center gap-4 border transition-all ${p.isDisconnected ? 'border-rose-500/50 text-white/30 grayscale' : 'border-white/10 text-white'
-                  }`}
-              >
-                <span className="text-4xl">{p.avatar}</span>
-                {p.nickname}
-                {p.isDisconnected && <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest ml-2">{t('host.offline')}</span>}
-              </motion.div>
+            {players.map((player) => (
+              <PlayerCard
+                key={player.id}
+                player={player}
+                t={t}
+              />
             ))}
           </AnimatePresence>
         </div>
