@@ -1,3 +1,5 @@
+'use client';
+
 import { motion } from 'motion/react';
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { memo } from 'react';

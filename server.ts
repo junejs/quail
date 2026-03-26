@@ -25,7 +25,6 @@ import {
 } from './lib/db';
 import jwt from 'jsonwebtoken';
 import { serialize, parse as parseCookie } from 'cookie';
-import { authenticateLDAP } from './lib/ldap';
 import { AVATARS } from './lib/constants';
 import type { Quiz, Player } from './lib/types';
 
@@ -64,7 +63,9 @@ interface Room {
 const rooms: Record<string, Room> = {};
 
 const JWT_SECRET = process.env.JWT_SECRET || 'quail-secret-key';
-const LDAP_ENABLED = process.env.NEXT_PUBLIC_LDAP_ENABLED === 'true';
+const HOST_USERNAME = process.env.HOST_USERNAME;
+const HOST_PASSWORD = process.env.HOST_PASSWORD;
+const AUTH_ENABLED = !!(HOST_USERNAME && HOST_PASSWORD);
 
 // Heartbeat intervals for each active game
 const heartbeatIntervals: Record<string, NodeJS.Timeout> = {};
@@ -113,9 +114,9 @@ const server = createServer(async (req, res) => {
 
     // Auth Routes
     if (pathname === '/api/auth/status' && req.method === 'GET') {
-      if (!LDAP_ENABLED) {
+      if (!AUTH_ENABLED) {
         res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({ authenticated: true, ldapEnabled: false }));
+        res.end(JSON.stringify({ authenticated: true, authEnabled: false }));
         return;
       }
 
@@ -124,17 +125,17 @@ const server = createServer(async (req, res) => {
 
       if (!token) {
         res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({ authenticated: false, ldapEnabled: true }));
+        res.end(JSON.stringify({ authenticated: false, authEnabled: true }));
         return;
       }
 
       try {
         jwt.verify(token, JWT_SECRET);
         res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({ authenticated: true, ldapEnabled: true }));
+        res.end(JSON.stringify({ authenticated: true, authEnabled: true }));
       } catch (e) {
         res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({ authenticated: false, ldapEnabled: true }));
+        res.end(JSON.stringify({ authenticated: false, authEnabled: true }));
       }
       return;
     }
@@ -145,7 +146,11 @@ const server = createServer(async (req, res) => {
       req.on('end', async () => {
         try {
           const { username, password } = JSON.parse(body);
-          const isAuthenticated = await authenticateLDAP(username, password);
+
+          // Check against env credentials if AUTH_ENABLED
+          const isAuthenticated = AUTH_ENABLED
+            ? username === HOST_USERNAME && password === HOST_PASSWORD
+            : true;
 
           if (isAuthenticated) {
             const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '24h' });

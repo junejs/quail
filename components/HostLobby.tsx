@@ -1,3 +1,5 @@
+'use client';
+
 import { AnimatePresence, motion } from 'motion/react';
 import { QrCode } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';

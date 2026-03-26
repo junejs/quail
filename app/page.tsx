@@ -28,7 +28,7 @@ function HomeContent() {
     setPin, setNickname, setAvatar, setIsHost, setGameState,
     quizzes, addQuiz, fetchQuizzes, selectedQuiz, setSelectedQuiz,
     sessionId, setSessionId, setPlayers,
-    isAuthenticated, ldapEnabled, logout, checkAuth
+    isAuthenticated, authEnabled, logout, checkAuth
   } = useGameStore();
   const { t } = useTranslation();
   const locale = useStore(useI18nStore, (state) => state.locale);
@@ -211,7 +211,7 @@ function HomeContent() {
             )}
           </AnimatePresence>
         </div>
-        {ldapEnabled && isAuthenticated && (
+        {authEnabled && isAuthenticated && (
           <button
             onClick={() => logout()}
             className="p-3 rounded-2xl bg-rose-500/5 backdrop-blur-xl border border-rose-500/20 text-rose-400/70 hover:bg-rose-500/10 hover:text-rose-400 transition-all flex items-center gap-3 px-5 group"

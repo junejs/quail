@@ -11,7 +11,7 @@ function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callback = searchParams.get('callback') || '/';
-  const { checkAuth, ldapEnabled } = useGameStore();
+  const { checkAuth, authEnabled } = useGameStore();
   const { t } = useTranslation();
 
   const [username, setUsername] = useState('');
@@ -67,7 +67,7 @@ function LoginContent() {
             <Lock className="w-10 h-10 text-indigo-400" />
           </div>
           <h1 className="text-4xl font-black text-white tracking-tighter mb-2">{t('login.hostLogin')}</h1>
-          <p className="text-white/40 font-bold uppercase tracking-widest text-xs">{t('login.ldapRequired')}</p>
+          <p className="text-white/40 font-bold uppercase tracking-widest text-xs">{t('login.hostRequired')}</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">

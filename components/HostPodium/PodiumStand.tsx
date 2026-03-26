@@ -1,3 +1,5 @@
+'use client';
+
 import { motion } from 'motion/react';
 import { memo } from 'react';
 import type { Player } from '@/lib/types';

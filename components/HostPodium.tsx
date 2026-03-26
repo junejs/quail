@@ -1,3 +1,5 @@
+'use client';
+
 import { AnimatePresence, motion } from 'motion/react';
 import { memo } from 'react';
 import { Quiz } from '@/lib/store';

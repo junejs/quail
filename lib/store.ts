@@ -16,7 +16,7 @@ interface GameStore {
   gameResults: GameResult[];
   selectedQuiz: Quiz | null;
   isAuthenticated: boolean;
-  ldapEnabled: boolean;
+  authEnabled: boolean;
   setPin: (pin: string | null) => void;
   setNickname: (nickname: string | null) => void;
   setAvatar: (avatar: string | null) => void;
@@ -52,7 +52,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   gameResults: [],
   selectedQuiz: null,
   isAuthenticated: false,
-  ldapEnabled: false,
+  authEnabled: false,
   setPin: (pin) => {
     set({ pin });
     if (typeof window !== 'undefined') localStorage.setItem('quail_pin', pin || '');
@@ -113,7 +113,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     try {
       const res = await fetch('/api/auth/status');
       const data = await res.json();
-      set({ isAuthenticated: data.authenticated, ldapEnabled: data.ldapEnabled });
+      set({ isAuthenticated: data.authenticated, authEnabled: data.authEnabled });
       return data.authenticated;
     } catch (err) {
       console.error('Failed to check auth:', err);

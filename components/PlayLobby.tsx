@@ -1,3 +1,5 @@
+'use client';
+
 import { AnimatePresence, motion } from 'motion/react';
 import { Shuffle } from 'lucide-react';
 import { AVATAR_GROUPS } from '@/lib/constants';
