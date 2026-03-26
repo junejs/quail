@@ -324,7 +324,13 @@ function HomeContent() {
                 </div>
 
                 <button
-                  onClick={() => setShowHostOptions(true)}
+                  onClick={() => {
+                    if (authEnabled && !isAuthenticated) {
+                      router.push('/login?callback=' + encodeURIComponent('/'));
+                      return;
+                    }
+                    setShowHostOptions(true);
+                  }}
                   disabled={!isConnected}
                   className="w-full bg-white/5 text-white/40 font-black text-[10px] uppercase tracking-[0.3em] p-5 rounded-2xl border border-white/5 hover:bg-white/10 hover:text-white hover:border-white/10 transition-all flex items-center justify-center gap-3 group"
                 >
@@ -388,7 +394,13 @@ function HomeContent() {
                 </div>
 
                 <button
-                  onClick={handleHostGame}
+                  onClick={() => {
+                    if (authEnabled && !isAuthenticated) {
+                      router.push('/login?callback=' + encodeURIComponent('/'));
+                      return;
+                    }
+                    handleHostGame();
+                  }}
                   disabled={!selectedQuiz}
                   className="group relative w-full flex items-center justify-center gap-4 p-6 bg-indigo-600 rounded-[2rem] text-white hover:bg-indigo-500 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_20px_40px_-10px_rgba(79,70,229,0.5)] disabled:opacity-50 overflow-hidden"
                 >

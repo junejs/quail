@@ -89,6 +89,26 @@ const server = createServer(async (req, res) => {
     }
 
     if (pathname === '/api/quizzes' && req.method === 'POST') {
+      // Auth check for creating quizzes
+      if (AUTH_ENABLED) {
+        const cookies = parseCookie(req.headers.cookie || '');
+        const token = cookies.auth_token;
+        if (!token) {
+          res.statusCode = 401;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'Authentication required' }));
+          return;
+        }
+        try {
+          jwt.verify(token, JWT_SECRET);
+        } catch (e) {
+          res.statusCode = 401;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'Invalid or expired token' }));
+          return;
+        }
+      }
+
       let body = '';
       req.on('data', chunk => { body += chunk; });
       req.on('end', async () => {
@@ -106,6 +126,26 @@ const server = createServer(async (req, res) => {
     }
 
     if (pathname === '/api/results' && req.method === 'GET') {
+      // Auth check for fetching results
+      if (AUTH_ENABLED) {
+        const cookies = parseCookie(req.headers.cookie || '');
+        const token = cookies.auth_token;
+        if (!token) {
+          res.statusCode = 401;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'Authentication required' }));
+          return;
+        }
+        try {
+          jwt.verify(token, JWT_SECRET);
+        } catch (e) {
+          res.statusCode = 401;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'Invalid or expired token' }));
+          return;
+        }
+      }
+
       const results = await getGameResults();
       res.setHeader('Content-Type', 'application/json');
       res.end(JSON.stringify(results));
