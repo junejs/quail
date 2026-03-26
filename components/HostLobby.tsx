@@ -1,18 +1,15 @@
 'use client';
 
 import { AnimatePresence, motion } from 'motion/react';
-import { QrCode } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { Quiz } from '@/lib/store';
 import type { Player } from '@/lib/types';
-import { memo } from 'react';
+import { memo, useState } from 'react';
 
 type HostLobbyProps = {
   pin: string;
   players: Player[];
   selectedQuiz: Quiz;
-  showQR: boolean;
-  setShowQR: (show: boolean) => void;
   joinUrl: string;
   onStartGame: () => void;
   t: (key: string) => string;
@@ -45,12 +42,12 @@ export default function HostLobby({
   pin,
   players,
   selectedQuiz,
-  showQR,
-  setShowQR,
   joinUrl,
   onStartGame,
   t
 }: HostLobbyProps) {
+  const [showQRModal, setShowQRModal] = useState(false);
+
   return (
     <motion.div
       key="lobby"
@@ -80,20 +77,13 @@ export default function HostLobby({
                 />
                 <div className="absolute inset-0 bg-indigo-500/10 blur-2xl rounded-full -z-10 group-hover:bg-indigo-500/20 transition-colors" />
               </div>
+              {/* Inline QR Code - clickable to enlarge */}
               <button
-                onClick={() => setShowQR(!showQR)}
-                className={`p-5 rounded-3xl transition-all flex items-center gap-3 font-black uppercase tracking-widest text-sm border relative overflow-hidden ${showQR ? 'bg-white text-indigo-900 border-white shadow-[0_0_30px_rgba(255,255,255,0.4)]' : 'bg-white/5 text-white border-white/10 hover:bg-white/10'
-                  }`}
+                onClick={() => setShowQRModal(true)}
+                className="p-4 rounded-3xl bg-white hover:bg-indigo-50 transition-all shadow-lg"
                 title={t('host.scanToJoin')}
               >
-                <QrCode size={24} className="relative z-10" />
-                <span className="relative z-10">{t('host.scanToJoin')}</span>
-                {showQR && (
-                  <motion.div
-                    layoutId="qr-active-bg"
-                    className="absolute inset-0 bg-white"
-                  />
-                )}
+                <QRCodeCanvas value={joinUrl} size={80} level="M" />
               </button>
             </div>
             <div className="mt-6 flex items-center gap-3">
@@ -113,15 +103,23 @@ export default function HostLobby({
         </motion.button>
       </div>
       <div className="flex-1 p-12 relative">
+        {/* QR Modal - click backdrop or close button to dismiss */}
         <AnimatePresence>
-          {showQR && (
+          {showQRModal && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="absolute inset-0 z-50 flex items-center justify-center bg-[#0a0502]/60 backdrop-blur-xl p-8"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-50 flex items-center justify-center p-8"
+              onClick={() => setShowQRModal(false)}
             >
-              <div className="bg-white p-16 rounded-[4rem] shadow-[0_0_60px_rgba(255,255,255,0.2)] flex flex-col items-center text-center border-[12px] border-indigo-600">
+              <motion.div
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.8 }}
+                className="bg-white p-16 rounded-[4rem] shadow-[0_0_60px_rgba(255,255,255,0.2)] flex flex-col items-center text-center border-[12px] border-indigo-600"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <h2 className="text-5xl font-black text-zinc-900 mb-10 uppercase tracking-tighter">{t('host.scanToJoinGame')}</h2>
                 <div className="bg-white p-8 rounded-[3rem] shadow-inner border-4 border-zinc-100">
                   <QRCodeCanvas
@@ -136,12 +134,12 @@ export default function HostLobby({
                   <p className="text-8xl font-black text-indigo-600 tracking-widest">{pin}</p>
                 </div>
                 <button
-                  onClick={() => setShowQR(false)}
+                  onClick={() => setShowQRModal(false)}
                   className="mt-12 bg-zinc-900 text-white px-16 py-5 rounded-3xl text-2xl font-black hover:bg-zinc-800 transition-all uppercase tracking-widest"
                 >
                   {t('host.close')}
                 </button>
-              </div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>

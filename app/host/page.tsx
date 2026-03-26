@@ -46,7 +46,6 @@ export default function HostPage() {
   const [answerCounts, setAnswerCounts] = useState<Record<number, number>>({});
   const [isMuted, setIsMuted] = useState(false);
   const [isAudioBlocked, setIsAudioBlocked] = useState(false);
-  const [showQR, setShowQR] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
@@ -251,8 +250,6 @@ export default function HostPage() {
               pin={pin}
               players={players}
               selectedQuiz={selectedQuiz}
-              showQR={showQR}
-              setShowQR={setShowQR}
               joinUrl={joinUrl}
               onStartGame={handleStartGame}
               t={t}
